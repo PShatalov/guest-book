@@ -36,7 +36,11 @@ export const AppShell = ({ children, sessionSlot }: AppShellProps) => {
           </Typography>
           <Box sx={appShellStyles.navLinks}>
             {isPending ? (
-              <Skeleton width={120} height={32} data-testid="nav-session-loading" />
+              <Skeleton
+                width={120}
+                height={32}
+                data-testid="nav-session-loading"
+              />
             ) : isAuthenticated ? (
               sessionSlot
             ) : (
@@ -44,7 +48,12 @@ export const AppShell = ({ children, sessionSlot }: AppShellProps) => {
                 <Button color="inherit" component={Link} href="/login">
                   Sign in
                 </Button>
-                <Button color="inherit" component={Link} href="/register" variant="outlined">
+                <Button
+                  color="inherit"
+                  component={Link}
+                  href="/register"
+                  variant="outlined"
+                >
                   Sign up
                 </Button>
               </>

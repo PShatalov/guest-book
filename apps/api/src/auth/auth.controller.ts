@@ -28,7 +28,9 @@ import { RegisterRequestDto } from './dto/register-request.dto';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authApplicationService: AuthApplicationService) {}
+  constructor(
+    private readonly authApplicationService: AuthApplicationService,
+  ) {}
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)

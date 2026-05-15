@@ -11,7 +11,11 @@ function isPlaywrightWorker(): boolean {
 }
 
 export function writeE2eRuntime(config: E2eConfig): void {
-  writeFileSync(E2E_RUNTIME_FILE, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+  writeFileSync(
+    E2E_RUNTIME_FILE,
+    `${JSON.stringify(config, null, 2)}\n`,
+    'utf8',
+  );
 }
 
 export function readE2eRuntime(): E2eConfig {

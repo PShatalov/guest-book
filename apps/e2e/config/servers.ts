@@ -37,10 +37,7 @@ export function freeE2ePorts(): void {
 }
 
 /** True when something accepts TCP connections (Docker/OrbStack may not show in host-scoped lsof). */
-export function isPortListening(
-  port: number,
-  host = '127.0.0.1',
-): boolean {
+export function isPortListening(port: number, host = '127.0.0.1'): boolean {
   try {
     execSync(`nc -z -w 1 ${host} ${port}`, { stdio: 'pipe' });
     return true;
@@ -61,7 +58,8 @@ function pickPortForE2e(
   reuseExistingServer: boolean,
   devPort: string,
 ): { port: string; shifted: boolean } {
-  const preferred = env[envKey] ?? (reuseExistingServer ? devPort : candidates[0]);
+  const preferred =
+    env[envKey] ?? (reuseExistingServer ? devPort : candidates[0]);
 
   if (reuseExistingServer) {
     return { port: preferred, shifted: false };
@@ -143,12 +141,16 @@ export function toProbeUrl(url: string): string {
   }
 }
 
-export function useExternalServers(env: NodeJS.ProcessEnv = process.env): boolean {
+export function useExternalServers(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
   const value = env.E2E_EXTERNAL_SERVERS;
   return value === '1' || value === 'true';
 }
 
-export function shouldReuseServers(env: NodeJS.ProcessEnv = process.env): boolean {
+export function shouldReuseServers(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
   if (env.CI) {
     return false;
   }

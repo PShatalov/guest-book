@@ -50,7 +50,9 @@ test.describe('Sign-up functionality', () => {
 
     // Step 2–4: Register and redirect home
     await registerAndGoHome(page, username);
-    await expect(page, 'AC-1.4: redirected to home after register').toHaveURL('/');
+    await expect(page, 'AC-1.4: redirected to home after register').toHaveURL(
+      '/',
+    );
 
     // Step 5: Home content visible
     await expect(
@@ -59,9 +61,7 @@ test.describe('Sign-up functionality', () => {
     ).toBeVisible({ timeout: TIMEOUT });
   });
 
-  test('should link to sign-in from register UI', async ({
-    page,
-  }) => {
+  test('should link to sign-in from register UI', async ({ page }) => {
     // Step 1: Navigate to /register
     await gotoRegister(page);
     await expect(

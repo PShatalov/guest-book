@@ -33,9 +33,7 @@ test.describe('Sign in functionality', () => {
     ).toBeVisible({ timeout: TIMEOUT });
   });
 
-  test('should redirect to home after successful login', async ({
-    page,
-  }) => {
+  test('should redirect to home after successful login', async ({ page }) => {
     const username = uniqueUser('login_user');
 
     await gotoRegister(page);
@@ -53,9 +51,7 @@ test.describe('Sign in functionality', () => {
     ).toBeVisible({ timeout: TIMEOUT });
   });
 
-  test('should link to sign-up from login UI', async ({
-    page,
-  }) => {
+  test('should link to sign-up from login UI', async ({ page }) => {
     await gotoLogin(page);
     await loginBodySignUpLink(page).click();
 
