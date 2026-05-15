@@ -62,15 +62,48 @@ curl http://localhost:3001/health
 
 A healthy stack returns JSON with `"status":"ok"` and `"database":"up"`. Stop with `docker compose down` (add `-v` to remove the Postgres volume).
 
-| Variable | Purpose |
-| -------- | ------- |
-| `POSTGRES_USER` | PostgreSQL role |
-| `POSTGRES_PASSWORD` | PostgreSQL password |
-| `POSTGRES_DB` | Database name |
-| `POSTGRES_PORT` | Host port mapped to Postgres (default `5432`) |
-| `API_PORT` | Host port mapped to the API (default `3001`) |
+| Variable            | Purpose                                       |
+| ------------------- | --------------------------------------------- |
+| `POSTGRES_USER`     | PostgreSQL role                               |
+| `POSTGRES_PASSWORD` | PostgreSQL password                           |
+| `POSTGRES_DB`       | Database name                                 |
+| `POSTGRES_PORT`     | Host port mapped to Postgres (default `5432`) |
+| `API_PORT`          | Host port mapped to the API (default `3001`)  |
 
 The API container receives `DATABASE_URL` built from those values and connects to the `postgres` service hostname on the Compose network.
+
+### Tilt (local development)
+
+Runs the Compose stack (PostgreSQL + API) and the Next.js dev server from a single command with the [Tilt](https://tilt.dev/) dashboard.
+
+**Prerequisites:** [Tilt CLI](https://docs.tilt.dev/install.html), [Docker Engine](https://docs.docker.com/engine/) with Compose v2, Node.js 20+, pnpm 9.x, and `pnpm install` at the repository root.
+
+```bash
+cp compose.env.example .env
+# Edit .env and set POSTGRES_PASSWORD (see Docker Compose section for variables)
+
+tilt up
+```
+
+Open the Tilt UI at [http://localhost:10350](http://localhost:10350). When `postgres` and `api` are green:
+
+```bash
+curl http://localhost:3001/health
+```
+
+A healthy stack returns JSON with `"status":"ok"` and `"database":"up"`. The web app is available at [http://localhost:3000](http://localhost:3000).
+
+Stop everything with:
+
+```bash
+tilt down
+```
+
+If a resource stays unhealthy, inspect logs with `tilt logs <resource>` or `docker compose logs <service>` (for example `docker compose logs api`).
+
+If the `web` resource reloads in a loop, ensure `.tiltignore` is present and that Tilt is not watching `apps/web/.next` (build output). Restart with `tilt down` then `tilt up` after pulling changes to the `Tiltfile`.
+
+Environment variables are the same as [Docker Compose (API + PostgreSQL)](#docker-compose-api--postgresql); Tilt reads the root `.env` file used by Compose.
 
 ### Web (Next.js)
 

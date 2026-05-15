@@ -1,0 +1,14 @@
+# Build outputs and caches — Next.js dev server writes here continuously.
+**/.next
+**/.turbo
+**/dist
+**/coverage
+**/*.tsbuildinfo
+
+# Dependencies (not source edits)
+**/node_modules
+
+# Test / tooling artifacts
+**/playwright-report
+**/test-results
+**/.playwright
