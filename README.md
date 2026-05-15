@@ -14,8 +14,8 @@ Monorepo for the guestbook application (message feed, auth, filtering). Orchestr
 
 ## Prerequisites
 
-- Node.js 20+
-- [pnpm](https://pnpm.io/installation) 9.x (see `packageManager` in root `package.json`)
+- Node.js **24.15.0** LTS ([`.nvmrc`](.nvmrc) — use `nvm install`, `fnm use`, or [nodejs.org](https://nodejs.org/))
+- [pnpm](https://pnpm.io/installation) 9.15.9 (see `packageManager` in root `package.json`; `engine-strict` is enabled in [`.npmrc`](.npmrc))
 
 ## Commands
 
@@ -76,7 +76,7 @@ The API container receives `DATABASE_URL` built from those values and connects t
 
 Runs the Compose stack (PostgreSQL + API) and the Next.js dev server from a single command with the [Tilt](https://tilt.dev/) dashboard.
 
-**Prerequisites:** [Tilt CLI](https://docs.tilt.dev/install.html), [Docker Engine](https://docs.docker.com/engine/) with Compose v2, Node.js 20+, pnpm 9.x, and `pnpm install` at the repository root.
+**Prerequisites:** [Tilt CLI](https://docs.tilt.dev/install.html), [Docker Engine](https://docs.docker.com/engine/) with Compose v2, Node.js 24.15.0 LTS (see [`.nvmrc`](.nvmrc)), pnpm 9.15.9, and `pnpm install` at the repository root.
 
 ```bash
 cp compose.env.example .env
@@ -138,7 +138,7 @@ CI runs automatically on **pull requests** and on **pushes to `main`**. Workflow
 
 ### Verify (PR and `main`)
 
-The [CI workflow](.github/workflows/ci.yml) runs on `ubuntu-latest` with Node 20 and pnpm 9:
+The [CI workflow](.github/workflows/ci.yml) runs on `ubuntu-latest` with Node.js from [`.nvmrc`](.nvmrc) and pnpm 9.15.9:
 
 1. `pnpm install --frozen-lockfile`
 2. `pnpm build` (TypeScript checks for API via `nest build` and web via `next build`)
