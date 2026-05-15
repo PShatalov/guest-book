@@ -18,13 +18,20 @@ import { getMessageFeedEmptyCopy } from './messageFeedEmptyCopy';
 
 export const MessageFeedPanel = () => {
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [activeAuthorUsername, setActiveAuthorUsername] = useState<
+    string | null
+  >(null);
   const [activeDateRange, setActiveDateRange] =
     useState<MessageDateRangeFilter | null>(null);
   const [isErrorDismissed, setIsErrorDismissed] = useState(false);
 
   const feedFilters = useMemo(
-    () => ({ categoryTag: activeTag, dateRange: activeDateRange }),
-    [activeTag, activeDateRange],
+    () => ({
+      authorUsername: activeAuthorUsername,
+      categoryTag: activeTag,
+      dateRange: activeDateRange,
+    }),
+    [activeAuthorUsername, activeTag, activeDateRange],
   );
 
   const {
@@ -46,7 +53,11 @@ export const MessageFeedPanel = () => {
   const showInitialLoading = isPending;
   const showEmpty =
     !showInitialLoading && !isError && items.length === 0 && !isRefetching;
-  const emptyMessage = getMessageFeedEmptyCopy(activeTag, activeDateRange);
+  const emptyMessage = getMessageFeedEmptyCopy(
+    activeTag,
+    activeDateRange,
+    activeAuthorUsername,
+  );
   const showErrorAlert = isError && !isErrorDismissed;
 
   const handleRetry = () => {
@@ -57,9 +68,11 @@ export const MessageFeedPanel = () => {
   return (
     <Stack spacing={2} sx={messageFeedPanelStyles.root}>
       <MessageFeedFilters
+        activeAuthorUsername={activeAuthorUsername}
         activeDateRange={activeDateRange}
         activeTag={activeTag}
-        onFiltersChange={({ categoryTag, dateRange }) => {
+        onFiltersChange={({ authorUsername, categoryTag, dateRange }) => {
+          setActiveAuthorUsername(authorUsername);
           setActiveTag(categoryTag);
           setActiveDateRange(dateRange);
         }}

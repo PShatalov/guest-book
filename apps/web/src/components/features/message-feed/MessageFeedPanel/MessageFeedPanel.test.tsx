@@ -88,6 +88,14 @@ const applyTagFilter = (tag: string) => {
   applyFilters();
 };
 
+const applyUsernameFilter = (username: string) => {
+  openFilterPopover();
+  fireEvent.click(screen.getByTestId('filter-popover-nav-user-name'));
+  const input = screen.getByLabelText(/filter by user name/i);
+  fireEvent.change(input, { target: { value: username } });
+  applyFilters();
+};
+
 const applyDateFilterFrom = (value: string) => {
   openFilterPopover();
   fireEvent.click(screen.getByTestId('filter-popover-nav-date-time'));
@@ -165,6 +173,15 @@ describe('MessageFeedPanel', () => {
 
     expect(screen.getByTestId('message-feed-empty')).toHaveTextContent(
       'No messages in this date range',
+    );
+  });
+
+  it('shows username-only empty copy when a username filter returns no matches', () => {
+    renderMessageFeedPanel();
+    applyUsernameFilter('alice');
+
+    expect(screen.getByTestId('message-feed-empty')).toHaveTextContent(
+      'No messages from this user',
     );
   });
 
@@ -270,6 +287,7 @@ describe('MessageFeedPanel', () => {
   it('clears all filters from the popover footer', () => {
     renderMessageFeedPanel();
     applyTagFilter('news');
+    applyUsernameFilter('alice');
     applyDateFilterFrom(
       dayjs('2026-05-01T10:00:00').format('MM/DD/YYYY hh:mm A'),
     );

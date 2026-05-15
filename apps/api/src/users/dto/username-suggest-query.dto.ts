@@ -14,8 +14,8 @@ import {
 export class UsernameSuggestQueryDto {
   @ApiProperty({
     description:
-      'Username prefix for typeahead (trimmed before match). Empty or whitespace-only values return 400.',
-    example: 'ali',
+      'Username search text for typeahead (trimmed; case-insensitive substring match). Empty or whitespace-only values return 400.',
+    example: 'doe',
     minLength: 1,
     maxLength: 64,
   })

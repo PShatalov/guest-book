@@ -3,16 +3,19 @@ import dayjs from 'dayjs';
 
 import type { MessageDateRangeFilter } from '@/lib/messages/messageDateRange';
 import { MAX_CATEGORY_TAG_LENGTH } from '@/lib/messages/messageTypes';
+import { MAX_USERNAME_LENGTH } from '@/lib/users/usernameTypes';
 
 export const MESSAGE_FEED_FILTER_SECTION_IDS = {
   categoryTag: 'category-tag',
   dateTime: 'date-time',
+  authorUsername: 'user-name',
 } as const;
 
 export type MessageFeedFilterSectionId =
   (typeof MESSAGE_FEED_FILTER_SECTION_IDS)[keyof typeof MESSAGE_FEED_FILTER_SECTION_IDS];
 
 export type MessageFeedFiltersValue = {
+  authorUsername: string | null;
   categoryTag: string | null;
   dateRange: MessageDateRangeFilter | null;
 };
@@ -56,4 +59,31 @@ export const resolveTagFromDraft = (tagInput: string): string | null => {
     return null;
   }
   return normalized;
+};
+
+export const validateUsernameDraft = (usernameInput: string): string | null => {
+  const trimmed = usernameInput.trim();
+  if (trimmed.length === 0) {
+    if (usernameInput.length > 0) {
+      return 'User name is required to filter.';
+    }
+    return null;
+  }
+  if (trimmed.length > MAX_USERNAME_LENGTH) {
+    return `User name must be ${MAX_USERNAME_LENGTH} characters or fewer.`;
+  }
+  return null;
+};
+
+export const resolveUsernameFromDraft = (
+  usernameInput: string,
+): string | null => {
+  const trimmed = usernameInput.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+  if (validateUsernameDraft(usernameInput) !== null) {
+    return null;
+  }
+  return trimmed;
 };

@@ -5,11 +5,11 @@ import { UsernameSuggestionService } from './username-suggestion.service';
 
 describe('UsernameSuggestionService', () => {
   let service: UsernameSuggestionService;
-  let repository: { findUsernamesByPrefix: jest.Mock };
+  let repository: { findUsernamesContaining: jest.Mock };
 
   beforeEach(async () => {
     repository = {
-      findUsernamesByPrefix: jest.fn().mockResolvedValue([]),
+      findUsernamesContaining: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -23,19 +23,19 @@ describe('UsernameSuggestionService', () => {
   });
 
   it('returns suggestions for a trimmed prefix with default limit', async () => {
-    repository.findUsernamesByPrefix.mockResolvedValue(['alice', 'alicia']);
+    repository.findUsernamesContaining.mockResolvedValue(['alice', 'alicia']);
 
     await expect(service.suggest({ q: ' Ali ' })).resolves.toEqual({
       items: ['alice', 'alicia'],
     });
 
-    expect(repository.findUsernamesByPrefix).toHaveBeenCalledWith('Ali', 10);
+    expect(repository.findUsernamesContaining).toHaveBeenCalledWith('Ali', 10);
   });
 
   it('passes a custom limit to the repository', async () => {
     await service.suggest({ q: 'bob', limit: 5 });
 
-    expect(repository.findUsernamesByPrefix).toHaveBeenCalledWith('bob', 5);
+    expect(repository.findUsernamesContaining).toHaveBeenCalledWith('bob', 5);
   });
 
   it('rejects a whitespace-only query', async () => {
@@ -43,7 +43,7 @@ describe('UsernameSuggestionService', () => {
       BadRequestException,
     );
 
-    expect(repository.findUsernamesByPrefix).not.toHaveBeenCalled();
+    expect(repository.findUsernamesContaining).not.toHaveBeenCalled();
   });
 
   it('rejects a query longer than 64 characters', async () => {
@@ -51,7 +51,7 @@ describe('UsernameSuggestionService', () => {
       BadRequestException,
     );
 
-    expect(repository.findUsernamesByPrefix).not.toHaveBeenCalled();
+    expect(repository.findUsernamesContaining).not.toHaveBeenCalled();
   });
 
   it('rejects an out-of-range limit', async () => {
@@ -59,6 +59,6 @@ describe('UsernameSuggestionService', () => {
       service.suggest({ q: 'ali', limit: 0 }),
     ).rejects.toBeInstanceOf(BadRequestException);
 
-    expect(repository.findUsernamesByPrefix).not.toHaveBeenCalled();
+    expect(repository.findUsernamesContaining).not.toHaveBeenCalled();
   });
 });

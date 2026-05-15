@@ -7,10 +7,9 @@ import { useCallback, useId, useState, type MouseEvent } from 'react';
 import { FilterPopover } from '@/components/shared/filter-popover/FilterPopover';
 import type { MessageDateRangeFilter } from '@/lib/messages/messageDateRange';
 
-import { MessageDateTimeFilterFields } from '../MessageDateTimeFilterFields';
-import { MessageTagFilterFields } from '../MessageTagFilterFields';
 import { messageFeedFiltersStyles } from './MessageFeedFilters.styles';
 import { FilterListIcon } from './FilterListIcon';
+import { MessageFeedFilterSectionContent } from './MessageFeedFilterSectionContent/MessageFeedFilterSectionContent';
 import {
   MESSAGE_FEED_FILTER_SECTION_IDS,
   type MessageFeedFiltersValue,
@@ -18,6 +17,7 @@ import {
 } from './useMessageFeedFilters';
 
 export type MessageFeedFiltersProps = {
+  activeAuthorUsername: string | null;
   activeDateRange: MessageDateRangeFilter | null;
   activeTag: string | null;
   onFiltersChange: (filters: MessageFeedFiltersValue) => void;
@@ -26,9 +26,16 @@ export type MessageFeedFiltersProps = {
 const FILTER_SECTIONS = [
   { id: MESSAGE_FEED_FILTER_SECTION_IDS.categoryTag, label: 'Category tag' },
   { id: MESSAGE_FEED_FILTER_SECTION_IDS.dateTime, label: 'Date & time' },
+  { id: MESSAGE_FEED_FILTER_SECTION_IDS.authorUsername, label: 'User name' },
 ] as const;
 
+const isFilterSectionId = (
+  sectionId: string,
+): sectionId is (typeof FILTER_SECTIONS)[number]['id'] =>
+  FILTER_SECTIONS.some((section) => section.id === sectionId);
+
 export const MessageFeedFilters = ({
+  activeAuthorUsername,
   activeDateRange,
   activeTag,
   onFiltersChange,
@@ -37,91 +44,53 @@ export const MessageFeedFilters = ({
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const isOpen = anchorEl !== null;
 
-  const {
-    activeFilterCount,
-    clearDrafts,
-    end,
-    endError,
-    generalError,
-    handleDismissDateErrors,
-    handleEndBlur,
-    handleEndChange,
-    handleStartBlur,
-    handleStartChange,
-    handleTagChange,
-    hasDateValidationError,
-    selectedSectionId,
-    setSelectedSectionId,
-    start,
-    startError,
-    syncDraftsFromActive,
-    tagError,
-    tagInput,
-    validateAllDrafts,
-  } = useMessageFeedFilters({ activeDateRange, activeTag });
+  const filterState = useMessageFeedFilters({
+    activeAuthorUsername,
+    activeDateRange,
+    activeTag,
+  });
 
   const handleOpen = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
-      syncDraftsFromActive();
-      setSelectedSectionId(MESSAGE_FEED_FILTER_SECTION_IDS.categoryTag);
+      filterState.syncDraftsFromActive();
+      filterState.setSelectedSectionId(
+        MESSAGE_FEED_FILTER_SECTION_IDS.categoryTag,
+      );
       setAnchorEl(event.currentTarget);
     },
-    [setSelectedSectionId, syncDraftsFromActive],
+    [filterState],
   );
 
   const handleClose = useCallback(() => {
-    syncDraftsFromActive();
+    filterState.syncDraftsFromActive();
     setAnchorEl(null);
-  }, [syncDraftsFromActive]);
+  }, [filterState]);
 
   const handleApply = useCallback(() => {
-    const nextFilters = validateAllDrafts();
+    const nextFilters = filterState.validateAllDrafts();
     if (nextFilters === null) {
       return;
     }
     onFiltersChange(nextFilters);
     setAnchorEl(null);
-  }, [onFiltersChange, validateAllDrafts]);
+  }, [filterState, onFiltersChange]);
 
   const handleClearAll = useCallback(() => {
-    clearDrafts();
-    onFiltersChange({ categoryTag: null, dateRange: null });
+    filterState.clearDrafts();
+    onFiltersChange({
+      authorUsername: null,
+      categoryTag: null,
+      dateRange: null,
+    });
     setAnchorEl(null);
-  }, [clearDrafts, onFiltersChange]);
-
-  const renderSectionContent = () => {
-    if (selectedSectionId === MESSAGE_FEED_FILTER_SECTION_IDS.categoryTag) {
-      return (
-        <MessageTagFilterFields
-          error={tagError}
-          onChange={handleTagChange}
-          value={tagInput}
-        />
-      );
-    }
-    return (
-      <MessageDateTimeFilterFields
-        end={end}
-        endError={endError}
-        generalError={generalError}
-        hasValidationError={hasDateValidationError}
-        onDismissErrors={handleDismissDateErrors}
-        onEndBlur={handleEndBlur}
-        onEndChange={handleEndChange}
-        onStartBlur={handleStartBlur}
-        onStartChange={handleStartChange}
-        start={start}
-        startError={startError}
-      />
-    );
-  };
+  }, [filterState, onFiltersChange]);
 
   return (
     <>
       <Badge
-        badgeContent={activeFilterCount}
+        badgeContent={filterState.activeFilterCount}
         color="primary"
-        invisible={activeFilterCount === 0}
+        invisible={filterState.activeFilterCount === 0}
         sx={messageFeedFiltersStyles.badge}
       >
         <Button
@@ -132,7 +101,7 @@ export const MessageFeedFilters = ({
           onClick={handleOpen}
           startIcon={<FilterListIcon />}
           sx={messageFeedFiltersStyles.trigger}
-          variant={activeFilterCount > 0 ? 'contained' : 'outlined'}
+          variant={filterState.activeFilterCount > 0 ? 'contained' : 'outlined'}
         >
           Filter
         </Button>
@@ -147,17 +116,37 @@ export const MessageFeedFilters = ({
         id={popoverId}
         isOpen={isOpen}
         onClose={handleClose}
-        onSelectSection={(sectionId) =>
-          setSelectedSectionId(
-            sectionId as (typeof MESSAGE_FEED_FILTER_SECTION_IDS)[keyof typeof MESSAGE_FEED_FILTER_SECTION_IDS],
-          )
-        }
+        onSelectSection={(sectionId) => {
+          if (isFilterSectionId(sectionId)) {
+            filterState.setSelectedSectionId(sectionId);
+          }
+        }}
         primaryTestId="message-feed-filters-apply"
         secondaryTestId="message-feed-filters-clear-all"
         sections={[...FILTER_SECTIONS]}
-        selectedSectionId={selectedSectionId}
+        selectedSectionId={filterState.selectedSectionId}
       >
-        {renderSectionContent()}
+        <MessageFeedFilterSectionContent
+          end={filterState.end}
+          endError={filterState.endError}
+          generalError={filterState.generalError}
+          hasDateValidationError={filterState.hasDateValidationError}
+          onDismissDateErrors={filterState.handleDismissDateErrors}
+          onEndBlur={filterState.handleEndBlur}
+          onEndChange={filterState.handleEndChange}
+          onStartBlur={filterState.handleStartBlur}
+          onStartChange={filterState.handleStartChange}
+          onTagChange={filterState.handleTagChange}
+          onUsernameBlur={filterState.handleUsernameBlur}
+          onUsernameChange={filterState.handleUsernameChange}
+          selectedSectionId={filterState.selectedSectionId}
+          start={filterState.start}
+          startError={filterState.startError}
+          tagError={filterState.tagError}
+          tagInput={filterState.tagInput}
+          usernameError={filterState.usernameError}
+          usernameInput={filterState.usernameInput}
+        />
       </FilterPopover>
     </>
   );

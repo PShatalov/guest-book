@@ -48,13 +48,13 @@ export class UserAccountsRepository {
     return rows[0] ?? null;
   }
 
-  async findUsernamesByPrefix(
-    prefix: string,
+  async findUsernamesContaining(
+    query: string,
     limit: number,
   ): Promise<string[]> {
     const db = this.requireDb();
-    const escapedPrefix = escapeSqlLikePattern(prefix);
-    const pattern = `${escapedPrefix}%`;
+    const escapedQuery = escapeSqlLikePattern(query);
+    const pattern = `%${escapedQuery}%`;
 
     const rows = await db
       .select({ username: users.username })

@@ -30,16 +30,16 @@ export class UsernameSuggestionService {
       });
     }
 
-    const prefix = this.normalizeQueryPrefix(input.q);
-    const items = await this.userAccountsRepository.findUsernamesByPrefix(
-      prefix,
+    const query = this.normalizeQuery(input.q);
+    const items = await this.userAccountsRepository.findUsernamesContaining(
+      query,
       limit,
     );
 
     return { items };
   }
 
-  private normalizeQueryPrefix(q: string): string {
+  private normalizeQuery(q: string): string {
     const normalized = q.trim();
 
     if (normalized.length === 0) {

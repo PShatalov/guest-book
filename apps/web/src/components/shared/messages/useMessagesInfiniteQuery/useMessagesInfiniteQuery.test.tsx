@@ -45,7 +45,12 @@ describe('useMessagesInfiniteQuery', () => {
     });
 
     const { result } = renderHook(
-      () => useMessagesInfiniteQuery({ categoryTag: null, dateRange: null }),
+      () =>
+        useMessagesInfiniteQuery({
+          authorUsername: null,
+          categoryTag: null,
+          dateRange: null,
+        }),
       { wrapper: createWrapper() },
     );
 
@@ -68,6 +73,7 @@ describe('useMessagesInfiniteQuery', () => {
     const { result } = renderHook(
       () =>
         useMessagesInfiniteQuery({
+          authorUsername: null,
           categoryTag: 'general',
           dateRange: null,
         }),
@@ -92,6 +98,7 @@ describe('useMessagesInfiniteQuery', () => {
     const { result } = renderHook(
       () =>
         useMessagesInfiniteQuery({
+          authorUsername: null,
           categoryTag: null,
           dateRange: { createdFrom: '2026-05-01T00:00:00.000Z' },
         }),
@@ -116,6 +123,7 @@ describe('useMessagesInfiniteQuery', () => {
     const { result } = renderHook(
       () =>
         useMessagesInfiniteQuery({
+          authorUsername: null,
           categoryTag: 'general',
           dateRange: {
             createdFrom: '2026-05-01T00:00:00.000Z',
@@ -143,6 +151,7 @@ describe('useMessagesInfiniteQuery', () => {
     const { result } = renderHook(
       () =>
         useMessagesInfiniteQuery({
+          authorUsername: null,
           categoryTag: null,
           dateRange: {
             createdFrom: '2026-05-01T00:00:00.000Z',
@@ -160,6 +169,31 @@ describe('useMessagesInfiniteQuery', () => {
     );
   });
 
+  it('includes authorUsername in the request when filtering by user', async () => {
+    mockApiFetchClient.mockResolvedValue({
+      items: [],
+      hasMore: false,
+      nextCursor: null,
+    });
+
+    const { result } = renderHook(
+      () =>
+        useMessagesInfiniteQuery({
+          authorUsername: 'alice',
+          categoryTag: null,
+          dateRange: null,
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockApiFetchClient).toHaveBeenCalledWith(
+      '/messages?limit=5&authorUsername=alice',
+      expect.any(Object),
+    );
+  });
+
   it('exposes the next page cursor when hasMore is true', async () => {
     mockApiFetchClient.mockResolvedValue({
       items: [],
@@ -168,7 +202,12 @@ describe('useMessagesInfiniteQuery', () => {
     });
 
     const { result } = renderHook(
-      () => useMessagesInfiniteQuery({ categoryTag: null, dateRange: null }),
+      () =>
+        useMessagesInfiniteQuery({
+          authorUsername: null,
+          categoryTag: null,
+          dateRange: null,
+        }),
       { wrapper: createWrapper() },
     );
 

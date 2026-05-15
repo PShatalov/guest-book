@@ -145,7 +145,36 @@ describe('UsersController (e2e)', () => {
         });
     });
 
-    it('treats SQL wildcard characters in the prefix literally', async () => {
+    it('matches usernames containing the query anywhere (case-insensitive)', async () => {
+      const runId = Date.now();
+      const johnDoe = `johnDoe_${runId}`;
+      const johnDoe2 = `johnDoe2_${runId}`;
+      const janeDoe = `janeDoe_${runId}`;
+
+      await registerUser(app, johnDoe2);
+      await registerUser(app, janeDoe);
+      await registerUser(app, johnDoe);
+
+      const lowerResponse = await request(app.getHttpServer())
+        .get('/users/username-suggest')
+        .query({ q: 'doe' })
+        .expect(200);
+
+      expect(lowerResponse.body.items).toEqual([janeDoe, johnDoe2, johnDoe]);
+
+      const mixedCaseResponse = await request(app.getHttpServer())
+        .get('/users/username-suggest')
+        .query({ q: 'Doe' })
+        .expect(200);
+
+      expect(mixedCaseResponse.body.items).toEqual([
+        janeDoe,
+        johnDoe2,
+        johnDoe,
+      ]);
+    });
+
+    it('treats SQL wildcard characters in the query literally', async () => {
       const runId = Date.now();
       const literalUsername = `wild%_${runId}`;
       const otherUsername = `wildx_${runId}`;
