@@ -17,6 +17,10 @@ import { UserRegistrationService } from './user-registration.service';
     AuthSessionService,
     AuthenticatedSessionGuard,
   ],
-  exports: [AuthenticatedSessionGuard, AuthSessionService],
+  exports: [
+    AuthenticatedSessionGuard,
+    AuthSessionService,
+    UserAccountsRepository,
+  ],
 })
 export class AuthModule {}

@@ -47,6 +47,7 @@ describe('MessageListingService', () => {
       limit: 20,
       cursor: undefined,
       categoryTag: undefined,
+      authorUsername: undefined,
       createdFrom: undefined,
       createdTo: undefined,
     });
@@ -64,6 +65,30 @@ describe('MessageListingService', () => {
     await expect(service.list({ categoryTag: '   ' })).rejects.toBeInstanceOf(
       BadRequestException,
     );
+
+    expect(repository.findPage).not.toHaveBeenCalled();
+  });
+
+  it('trims the author username filter before querying', async () => {
+    await service.list({ authorUsername: ' Alice ' });
+
+    expect(repository.findPage).toHaveBeenCalledWith(
+      expect.objectContaining({ authorUsername: 'Alice' }),
+    );
+  });
+
+  it('rejects a whitespace-only author username filter', async () => {
+    await expect(
+      service.list({ authorUsername: '   ' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(repository.findPage).not.toHaveBeenCalled();
+  });
+
+  it('rejects an author username filter longer than 64 characters', async () => {
+    await expect(
+      service.list({ authorUsername: 'a'.repeat(65) }),
+    ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(repository.findPage).not.toHaveBeenCalled();
   });

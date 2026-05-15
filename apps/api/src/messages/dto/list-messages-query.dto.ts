@@ -68,4 +68,17 @@ export class ListMessagesQueryDto {
   @IsOptional()
   @IsISO8601({ strict: true })
   createdTo?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Filter by author username (trimmed; case-insensitive exact match). Empty or whitespace-only values return 400.',
+    example: 'alice',
+    minLength: 1,
+    maxLength: 64,
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(1, { message: 'authorUsername must not be empty' })
+  @MaxLength(64)
+  authorUsername?: string;
 }

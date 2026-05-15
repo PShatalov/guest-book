@@ -204,6 +204,66 @@ describe('MessagesController (e2e)', () => {
       expect(secondPage.body.nextCursor).toBeNull();
     });
 
+    it('filters by author username case-insensitively', async () => {
+      const authorUsername = uniqueUsername('filter_by_user');
+      const otherUsername = uniqueUsername('filter_other_user');
+      const authorAgent = await registerAndLogin(app, authorUsername);
+      const otherAgent = await registerAndLogin(app, otherUsername);
+
+      await authorAgent
+        .post('/messages')
+        .send({ text: 'From target author', categoryTag: 'general' })
+        .expect(201);
+      await otherAgent
+        .post('/messages')
+        .send({ text: 'From someone else', categoryTag: 'general' })
+        .expect(201);
+
+      const response = await request(app.getHttpServer())
+        .get('/messages')
+        .query({ authorUsername: ` ${authorUsername.toUpperCase()} ` })
+        .expect(200);
+
+      expect(response.body.items).toHaveLength(1);
+      expect(response.body.items[0]).toMatchObject({
+        text: 'From target author',
+        authorUsername,
+      });
+    });
+
+    it('returns 400 for an empty author username filter', async () => {
+      await request(app.getHttpServer())
+        .get('/messages')
+        .query({ authorUsername: '' })
+        .expect(400)
+        .expect((res) => {
+          expect(res.body.message).toEqual(
+            expect.arrayContaining(['authorUsername must not be empty']),
+          );
+        });
+
+      await request(app.getHttpServer())
+        .get('/messages')
+        .query({ authorUsername: '   ' })
+        .expect(400)
+        .expect((res) => {
+          expect(res.body.message).toEqual(
+            expect.arrayContaining(['authorUsername must not be empty']),
+          );
+        });
+    });
+
+    it('returns 400 when author username filter exceeds 64 characters', async () => {
+      await request(app.getHttpServer())
+        .get('/messages')
+        .query({ authorUsername: 'a'.repeat(65) })
+        .expect(400)
+        .expect((res) => {
+          expect(res.body.statusCode).toBe(400);
+          expect(res.body.message).toEqual(expect.any(Array));
+        });
+    });
+
     it('filters by category tag', async () => {
       const agent = await registerAndLogin(
         app,

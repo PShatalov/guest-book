@@ -9,6 +9,7 @@ const DEFAULT_LIMIT = 20;
 const MIN_LIMIT = 1;
 const MAX_LIMIT = 50;
 const MAX_CATEGORY_TAG_LENGTH = 32;
+const MAX_AUTHOR_USERNAME_LENGTH = 64;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -27,6 +28,7 @@ type ListMessagesInput = {
   limit?: number;
   cursor?: string;
   categoryTag?: string;
+  authorUsername?: string;
   createdFrom?: string;
   createdTo?: string;
 };
@@ -49,6 +51,9 @@ export class MessageListingService {
     }
 
     const categoryTag = this.normalizeCategoryTagFilter(input.categoryTag);
+    const authorUsername = this.normalizeAuthorUsernameFilter(
+      input.authorUsername,
+    );
     const cursor = this.decodeCursor(input.cursor);
     const createdFrom = this.parseCreatedBound(
       input.createdFrom,
@@ -72,6 +77,7 @@ export class MessageListingService {
       limit,
       cursor,
       categoryTag,
+      authorUsername,
       createdFrom,
       createdTo,
     });
@@ -138,6 +144,34 @@ export class MessageListingService {
       throw new BadRequestException({
         statusCode: 400,
         message: ['categoryTag must not exceed 32 characters'],
+        error: 'Bad Request',
+      });
+    }
+
+    return normalized;
+  }
+
+  private normalizeAuthorUsernameFilter(
+    authorUsername: string | undefined,
+  ): string | undefined {
+    if (authorUsername === undefined) {
+      return undefined;
+    }
+
+    const normalized = authorUsername.trim();
+
+    if (normalized.length === 0) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: ['authorUsername must not be empty'],
+        error: 'Bad Request',
+      });
+    }
+
+    if (normalized.length > MAX_AUTHOR_USERNAME_LENGTH) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: ['authorUsername must not exceed 64 characters'],
         error: 'Bad Request',
       });
     }
