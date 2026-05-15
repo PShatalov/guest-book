@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { JsonObjectBodyPipe } from './common/pipes/json-object-body.pipe';
 import { configureSessionMiddleware } from './common/session/configure-session.middleware';
 import type { AppConfig } from './config/configuration';
 
@@ -28,10 +29,12 @@ async function bootstrap() {
   }
 
   app.useGlobalPipes(
+    new JsonObjectBodyPipe(),
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      forbidUnknownValues: true,
     }),
   );
   app.useGlobalFilters(new GlobalExceptionFilter());
@@ -42,6 +45,16 @@ async function bootstrap() {
     .setVersion('1.0.0')
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
+  for (const schemaName of [
+    'RegisterRequestDto',
+    'LoginRequestDto',
+    'CreateMessageRequestDto',
+  ]) {
+    const schema = document.components?.schemas?.[schemaName];
+    if (schema && typeof schema === 'object' && 'properties' in schema) {
+      schema.additionalProperties = false;
+    }
+  }
   SwaggerModule.setup('api/docs', app, document);
 
   const port = configService.get('port', { infer: true });

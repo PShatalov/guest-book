@@ -11,7 +11,7 @@
     "start:prod": "node dist/main.js",
     "lint": "eslint .",
     "test": "jest --selectProjects unit",
-    "test:e2e:api": "jest --selectProjects e2e-db --forceExit",
+    "test:e2e:api": "jest --selectProjects e2e-db --forceExit --runInBand",
     "test:e2e:http": "jest test/health.e2e-spec.ts",
     "test:db:setup": "ts-node test/support/run-db-setup.ts",
     "test:db:teardown": "ts-node test/support/run-db-teardown.ts",
@@ -81,9 +81,11 @@
       {
         "displayName": "e2e-db",
         "rootDir": ".",
+        "maxWorkers": 1,
         "moduleFileExtensions": ["js", "json", "ts"],
         "testMatch": [
           "<rootDir>/test/auth.e2e-spec.ts",
+          "<rootDir>/test/messages.e2e-spec.ts",
           "<rootDir>/test/support/test-database-harness.integration.spec.ts"
         ],
         "globalSetup": "<rootDir>/test/global-setup.ts",
