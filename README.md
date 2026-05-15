@@ -130,7 +130,7 @@ Run all E2E specs from the repository root (starts the web app automatically via
 pnpm run test:e2e
 ```
 
-Equivalent to `npm run test:e2e` when using npm at the root. If tests fail with a missing-browser error, re-run `playwright install` in the `apps/e2e` workspace.
+Equivalent to `npm run test:e2e` when using npm at the root. If tests fail with a missing-browser error, re-run `pnpm --filter @guest-book/e2e run install:browsers` (browsers are stored under `playwright-core/.local-browsers` via `PLAYWRIGHT_BROWSERS_PATH=0`).
 
 ## Continuous integration (GitHub Actions)
 

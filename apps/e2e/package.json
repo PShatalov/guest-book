@@ -4,8 +4,8 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "install:browsers": "playwright install chromium firefox webkit",
-    "postinstall": "playwright install chromium firefox webkit",
+    "install:browsers": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium firefox webkit",
+    "postinstall": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium firefox webkit",
     "test:e2e": "playwright test"
   },
   "devDependencies": {
