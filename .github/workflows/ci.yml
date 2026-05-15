@@ -37,9 +37,6 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Typecheck (web)
-        run: pnpm --filter @guest-book/web typecheck
-
       - name: Lint
         run: pnpm lint
 

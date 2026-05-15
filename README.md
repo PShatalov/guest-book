@@ -141,11 +141,10 @@ CI runs automatically on **pull requests** and on **pushes to `main`**. Workflow
 The [CI workflow](.github/workflows/ci.yml) runs on `ubuntu-latest` with Node 20 and pnpm 9:
 
 1. `pnpm install --frozen-lockfile`
-2. `pnpm build` (includes NestJS compile-time checks for the API)
-3. `pnpm --filter @guest-book/web typecheck`
-4. `pnpm lint`
-5. `pnpm test`
-6. `pnpm format:check`
+2. `pnpm build` (TypeScript checks for API via `nest build` and web via `next build`)
+3. `pnpm lint`
+4. `pnpm test`
+5. `pnpm format:check`
 
 No Docker, Tilt, or PostgreSQL is required for this job. Open the **Actions** tab on GitHub to see logs for a failed step.
 
