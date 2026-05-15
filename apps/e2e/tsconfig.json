@@ -1,0 +1,9 @@
+{
+  "extends": "@guest-book/typescript-config/node.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "types": ["node", "@playwright/test"]
+  },
+  "include": ["playwright.config.ts", "tests/**/*.ts"]
+}

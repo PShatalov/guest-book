@@ -16,6 +16,10 @@
     "lint": {
       "dependsOn": ["^build"],
       "outputs": []
+    },
+    "test:e2e": {
+      "cache": false,
+      "dependsOn": []
     }
   }
 }

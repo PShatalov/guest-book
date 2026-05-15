@@ -6,6 +6,9 @@ node_modules
 dist
 .next
 coverage
+playwright-report
+test-results
+.playwright
 *.log
 .env
 .env.local

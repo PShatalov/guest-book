@@ -1,0 +1,17 @@
+{
+  "name": "@guest-book/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "install:browsers": "playwright install chromium firefox webkit",
+    "postinstall": "playwright install chromium firefox webkit",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@guest-book/typescript-config": "workspace:*",
+    "@playwright/test": "1.51.1",
+    "@types/node": "22.15.21",
+    "typescript": "5.7.3"
+  }
+}
