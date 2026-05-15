@@ -3,10 +3,11 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { asc, eq, ilike } from 'drizzle-orm';
 import type { DrizzleClient } from '../database/drizzle.provider';
 import { DRIZZLE } from '../database/drizzle.constants';
 import { users, type UserAccountRecord } from '../database/schema';
+import { escapeSqlLikePattern } from '../common/sql/escape-sql-like-pattern';
 import { UsernameAlreadyExistsError } from './errors/username-already-exists.error';
 
 function isUniqueViolation(error: unknown): boolean {
@@ -45,6 +46,24 @@ export class UserAccountsRepository {
       .limit(1);
 
     return rows[0] ?? null;
+  }
+
+  async findUsernamesByPrefix(
+    prefix: string,
+    limit: number,
+  ): Promise<string[]> {
+    const db = this.requireDb();
+    const escapedPrefix = escapeSqlLikePattern(prefix);
+    const pattern = `${escapedPrefix}%`;
+
+    const rows = await db
+      .select({ username: users.username })
+      .from(users)
+      .where(ilike(users.username, pattern))
+      .orderBy(asc(users.username))
+      .limit(limit);
+
+    return rows.map((row) => row.username);
   }
 
   async create(input: {

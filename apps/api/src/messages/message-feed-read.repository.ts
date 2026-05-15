@@ -43,6 +43,7 @@ export class MessageFeedReadRepository {
     limit: number;
     cursor?: { createdAt: Date; id: string };
     categoryTag?: string;
+    authorUsername?: string;
     createdFrom?: Date;
     createdTo?: Date;
   }): Promise<MessageFeedPage> {
@@ -52,6 +53,12 @@ export class MessageFeedReadRepository {
 
     if (input.categoryTag !== undefined) {
       conditions.push(sql`category_tag = ${input.categoryTag}`);
+    }
+
+    if (input.authorUsername !== undefined) {
+      conditions.push(
+        sql`LOWER(author_username) = LOWER(${input.authorUsername})`,
+      );
     }
 
     if (input.createdFrom !== undefined) {

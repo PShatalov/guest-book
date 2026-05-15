@@ -99,6 +99,7 @@
         "testMatch": [
           "<rootDir>/test/auth.e2e-spec.ts",
           "<rootDir>/test/messages.e2e-spec.ts",
+          "<rootDir>/test/users.e2e-spec.ts",
           "<rootDir>/test/support/test-database-harness.integration.spec.ts"
         ],
         "globalSetup": "<rootDir>/test/global-setup.ts",

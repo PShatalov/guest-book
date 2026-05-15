@@ -5,6 +5,7 @@ import { DrizzleModule } from './database/drizzle.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { MessagesModule } from './messages/messages.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { MessagesModule } from './messages/messages.module';
     HealthModule,
     AuthModule,
     MessagesModule,
+    UsersModule,
   ],
 })
 export class AppModule {}
