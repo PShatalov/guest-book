@@ -1,3 +1,1 @@
-import '@testing-library/jest-dom';
-
 process.env.OTEL_SDK_DISABLED = 'true';

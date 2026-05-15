@@ -4,21 +4,27 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
-  Logger,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(GlobalExceptionFilter.name);
+  constructor(
+    @InjectPinoLogger(GlobalExceptionFilter.name)
+    private readonly logger: PinoLogger,
+  ) {}
 
-  catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
 
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       const body = exception.getResponse();
+      this.logHttpException(request, status, exception);
+
       response
         .status(status)
         .json(
@@ -29,10 +35,38 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       return;
     }
 
-    this.logger.error('Unhandled server error');
+    this.logger.error(
+      {
+        err: exception,
+        req: { method: request.method, url: request.url },
+      },
+      'Unhandled server error',
+    );
+
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       message: 'Internal server error',
     });
+  }
+
+  private logHttpException(
+    request: Request,
+    status: number,
+    exception: HttpException,
+  ): void {
+    const logContext = {
+      statusCode: status,
+      req: { method: request.method, url: request.url },
+      response: exception.getResponse(),
+    };
+
+    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      this.logger.error(logContext, 'HTTP exception');
+      return;
+    }
+
+    if (status >= HttpStatus.BAD_REQUEST) {
+      this.logger.warn(logContext, 'HTTP exception');
+    }
   }
 }

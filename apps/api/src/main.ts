@@ -1,16 +1,18 @@
+import './telemetry';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
-import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { JsonObjectBodyPipe } from './common/pipes/json-object-body.pipe';
 import { configureSecurityMiddleware } from './common/security/configure-security.middleware';
 import { configureSessionMiddleware } from './common/session/configure-session.middleware';
 import type { AppConfig } from './config/configuration';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(Logger));
   const configService = app.get(ConfigService<AppConfig, true>);
 
   configureSecurityMiddleware(app, {
@@ -43,8 +45,6 @@ async function bootstrap() {
       forbidUnknownValues: true,
     }),
   );
-  app.useGlobalFilters(new GlobalExceptionFilter());
-
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Guest Book API')
     .setDescription('Guestbook REST API')

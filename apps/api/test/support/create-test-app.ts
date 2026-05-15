@@ -2,8 +2,8 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { App } from 'supertest/types';
+import { Logger } from 'nestjs-pino';
 import { AppModule } from '../../src/app.module';
-import { GlobalExceptionFilter } from '../../src/common/filters/global-exception.filter';
 import { JsonObjectBodyPipe } from '../../src/common/pipes/json-object-body.pipe';
 import { configureSecurityMiddleware } from '../../src/common/security/configure-security.middleware';
 import { configureSessionMiddleware } from '../../src/common/session/configure-session.middleware';
@@ -22,7 +22,8 @@ export async function createTestApp(
     imports: [AppModule],
   }).compile();
 
-  const app = moduleFixture.createNestApplication();
+  const app = moduleFixture.createNestApplication({ bufferLogs: true });
+  app.useLogger(app.get(Logger));
   const configService = app.get(ConfigService<AppConfig, true>);
 
   configureSecurityMiddleware(app, {
@@ -54,7 +55,6 @@ export async function createTestApp(
       forbidUnknownValues: true,
     }),
   );
-  app.useGlobalFilters(new GlobalExceptionFilter());
   await app.init();
   return app;
 }

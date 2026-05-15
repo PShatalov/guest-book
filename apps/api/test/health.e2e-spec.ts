@@ -6,6 +6,10 @@ import { createTestApp } from './support/create-test-app';
 describe('HealthCheckController (e2e)', () => {
   let app: INestApplication<App>;
 
+  beforeAll(() => {
+    process.env.OTEL_SDK_DISABLED = 'true';
+  });
+
   beforeEach(async () => {
     app = await createTestApp({ withSession: false });
   });
@@ -25,6 +29,16 @@ describe('HealthCheckController (e2e)', () => {
           database: 'not_configured',
         });
         expect(res.body.timestamp).toEqual(expect.any(String));
+      });
+  });
+
+  it('sets helmet security headers on GET /health when OTel is disabled', () => {
+    return request(app.getHttpServer())
+      .get('/health')
+      .expect(200)
+      .expect((res) => {
+        expect(res.headers['x-content-type-options']).toBe('nosniff');
+        expect(res.headers['x-frame-options']).toMatch(/DENY|SAMEORIGIN/i);
       });
   });
 });
