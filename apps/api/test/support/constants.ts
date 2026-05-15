@@ -12,6 +12,7 @@ export const TEST_SESSION_SECRET =
 export const TEST_MIGRATION_PATHS = [
   path.join(REPO_ROOT, 'apps/api/drizzle/0000_create_users.sql'),
   path.join(REPO_ROOT, 'apps/api/drizzle/0001_create_messages.sql'),
+  path.join(REPO_ROOT, 'apps/api/drizzle/0002_create_message_feed_view.sql'),
 ];
 
 export const TEST_TABLES_TO_TRUNCATE = [

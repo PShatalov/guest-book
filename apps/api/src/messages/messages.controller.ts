@@ -1,15 +1,18 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
@@ -17,7 +20,9 @@ import {
 import type { Request } from 'express';
 import { AuthenticatedSessionGuard } from '../common/guards/authenticated-session.guard';
 import { CreateMessageRequestDto } from './dto/create-message-request.dto';
+import { ListMessagesQueryDto } from './dto/list-messages-query.dto';
 import { MessageResponseDto } from './dto/message-response.dto';
+import { PaginatedMessagesResponseDto } from './dto/paginated-messages-response.dto';
 import { MessagesApplicationService } from './messages-application.service';
 
 @ApiTags('messages')
@@ -39,5 +44,17 @@ export class MessagesController {
     @Req() request: Request,
   ): Promise<MessageResponseDto> {
     return this.messagesApplicationService.createMessage(request, body);
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: 'List messages with cursor pagination and optional tag filter',
+  })
+  @ApiOkResponse({ type: PaginatedMessagesResponseDto })
+  @ApiBadRequestResponse({ description: 'Validation failed' })
+  async list(
+    @Query() query: ListMessagesQueryDto,
+  ): Promise<PaginatedMessagesResponseDto> {
+    return this.messagesApplicationService.listMessages(query);
   }
 }

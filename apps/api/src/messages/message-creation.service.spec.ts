@@ -1,11 +1,13 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MessageCreationService } from './message-creation.service';
+import { MessageFeedRefreshService } from './message-feed-refresh.service';
 import { MessagesRepository } from './messages.repository';
 
 describe('MessageCreationService', () => {
   let service: MessageCreationService;
   let repository: { create: jest.Mock };
+  let feedRefresh: { refresh: jest.Mock };
 
   const createdAt = new Date('2026-05-15T12:00:00.000Z');
 
@@ -19,11 +21,15 @@ describe('MessageCreationService', () => {
         createdAt,
       }),
     };
+    feedRefresh = {
+      refresh: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MessageCreationService,
         { provide: MessagesRepository, useValue: repository },
+        { provide: MessageFeedRefreshService, useValue: feedRefresh },
       ],
     }).compile();
 
@@ -49,6 +55,7 @@ describe('MessageCreationService', () => {
       text: 'Hello guestbook',
       categoryTag: 'general',
     });
+    expect(feedRefresh.refresh).toHaveBeenCalled();
   });
 
   it('rejects a whitespace-only category tag', async () => {
