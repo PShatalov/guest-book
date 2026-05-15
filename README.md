@@ -36,6 +36,14 @@ pnpm --filter @guest-book/api build
 pnpm --filter @guest-book/web test
 ```
 
+### API (NestJS)
+
+```bash
+cp apps/api/.env.example apps/api/.env
+pnpm --filter @guest-book/api start:dev
+curl http://localhost:3001/health
+```
+
 ## Turborepo
 
 Pipeline definitions live in `turbo.json`. Local caching is enabled by default. Build outputs are declared for `dist/**` and `.next/**` when apps produce them.
