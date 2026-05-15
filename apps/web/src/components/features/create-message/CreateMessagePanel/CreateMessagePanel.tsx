@@ -50,7 +50,7 @@ export const CreateMessagePanel = () => {
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2} sx={createMessagePanelStyles.compose}>
       {successMessage !== null ? (
         <Alert
           severity="success"
