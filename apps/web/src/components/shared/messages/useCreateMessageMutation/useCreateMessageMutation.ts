@@ -1,9 +1,11 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { apiFetchClient } from '@/lib/api/apiFetchClient';
 import { isMessage, type Message } from '@/lib/messages/messageTypes';
+
+import { messageKeys } from '../messageKeys';
 
 export type CreateMessagePayload = {
   text: string;
@@ -18,6 +20,8 @@ const parseMessageResponse = (data: unknown): Message => {
 };
 
 export const useCreateMessageMutation = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (payload: CreateMessagePayload) => {
       const data = await apiFetchClient<unknown>('/messages', {
@@ -25,6 +29,9 @@ export const useCreateMessageMutation = () => {
         body: payload,
       });
       return parseMessageResponse(data);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: messageKeys.all });
     },
   });
 };
