@@ -1,0 +1,12 @@
+.agents
+.sdlc-cgen
+
+node_modules
+.turbo
+dist
+.next
+coverage
+*.log
+.env
+.env.local
+.DS_Store
