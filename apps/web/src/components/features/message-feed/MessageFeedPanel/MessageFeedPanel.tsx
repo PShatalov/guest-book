@@ -11,8 +11,7 @@ import { useMemo, useState } from 'react';
 import { useMessagesInfiniteQuery } from '@/components/shared/messages/useMessagesInfiniteQuery';
 import type { MessageDateRangeFilter } from '@/lib/messages/messageDateRange';
 
-import { MessageDateTimeFilter } from '../MessageDateTimeFilter';
-import { MessageTagFilter } from '../MessageTagFilter';
+import { MessageFeedFilters } from '../MessageFeedFilters';
 import { MessageFeedList } from './MessageFeedList/MessageFeedList';
 import { messageFeedPanelStyles } from './MessageFeedPanel.styles';
 import { getMessageFeedEmptyCopy } from './messageFeedEmptyCopy';
@@ -57,13 +56,13 @@ export const MessageFeedPanel = () => {
 
   return (
     <Stack spacing={2} sx={messageFeedPanelStyles.root}>
-      <MessageTagFilter
-        onApply={setActiveTag}
-        onClear={() => setActiveTag(null)}
-      />
-      <MessageDateTimeFilter
-        onApply={setActiveDateRange}
-        onClear={() => setActiveDateRange(null)}
+      <MessageFeedFilters
+        activeDateRange={activeDateRange}
+        activeTag={activeTag}
+        onFiltersChange={({ categoryTag, dateRange }) => {
+          setActiveTag(categoryTag);
+          setActiveDateRange(dateRange);
+        }}
       />
       {showErrorAlert ? (
         <Alert

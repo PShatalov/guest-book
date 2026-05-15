@@ -72,7 +72,25 @@ const renderMessageFeedPanel = () => {
   );
 };
 
+const openFilterPopover = () => {
+  fireEvent.click(screen.getByTestId('message-feed-filter-trigger'));
+};
+
+const applyFilters = () => {
+  fireEvent.click(screen.getByTestId('message-feed-filters-apply'));
+};
+
+const applyTagFilter = (tag: string) => {
+  openFilterPopover();
+  fireEvent.change(screen.getByLabelText(/filter by tag/i), {
+    target: { value: tag },
+  });
+  applyFilters();
+};
+
 const applyDateFilterFrom = (value: string) => {
+  openFilterPopover();
+  fireEvent.click(screen.getByTestId('filter-popover-nav-date-time'));
   const fromInput = screen
     .getByTestId('message-date-filter-from')
     .querySelector('input');
@@ -80,7 +98,24 @@ const applyDateFilterFrom = (value: string) => {
     throw new Error('From date input not found');
   }
   fireEvent.change(fromInput, { target: { value } });
-  fireEvent.click(screen.getByTestId('message-date-filter-apply'));
+  applyFilters();
+};
+
+const clearDateFilterDraft = () => {
+  openFilterPopover();
+  fireEvent.click(screen.getByTestId('filter-popover-nav-date-time'));
+  const fromInput = screen
+    .getByTestId('message-date-filter-from')
+    .querySelector('input');
+  const toInput = screen
+    .getByTestId('message-date-filter-to')
+    .querySelector('input');
+  if (fromInput === null || toInput === null) {
+    throw new Error('Date inputs not found');
+  }
+  fireEvent.change(fromInput, { target: { value: '' } });
+  fireEvent.change(toInput, { target: { value: '' } });
+  applyFilters();
 };
 
 describe('MessageFeedPanel', () => {
@@ -115,10 +150,7 @@ describe('MessageFeedPanel', () => {
 
   it('shows filtered empty copy when a tag filter returns no matches', () => {
     renderMessageFeedPanel();
-    fireEvent.change(screen.getByLabelText(/filter by tag/i), {
-      target: { value: 'news' },
-    });
-    fireEvent.click(screen.getByTestId('message-tag-filter-apply'));
+    applyTagFilter('news');
 
     expect(screen.getByTestId('message-feed-empty')).toHaveTextContent(
       'No messages match this tag',
@@ -138,10 +170,7 @@ describe('MessageFeedPanel', () => {
 
   it('shows combined empty copy when tag and date filters return no matches', () => {
     renderMessageFeedPanel();
-    fireEvent.change(screen.getByLabelText(/filter by tag/i), {
-      target: { value: 'news' },
-    });
-    fireEvent.click(screen.getByTestId('message-tag-filter-apply'));
+    applyTagFilter('news');
     applyDateFilterFrom(
       dayjs('2026-05-01T10:00:00').format('MM/DD/YYYY hh:mm A'),
     );
@@ -202,18 +231,17 @@ describe('MessageFeedPanel', () => {
 
   it('keeps tag filter active when the date filter is cleared', () => {
     renderMessageFeedPanel();
-    fireEvent.change(screen.getByLabelText(/filter by tag/i), {
-      target: { value: 'news' },
-    });
-    fireEvent.click(screen.getByTestId('message-tag-filter-apply'));
+    applyTagFilter('news');
     applyDateFilterFrom(
       dayjs('2026-05-01T10:00:00').format('MM/DD/YYYY hh:mm A'),
     );
-    fireEvent.click(screen.getByTestId('message-date-filter-clear'));
+    clearDateFilterDraft();
 
     expect(screen.getByTestId('message-feed-empty')).toHaveTextContent(
       'No messages match this tag',
     );
+    openFilterPopover();
+    fireEvent.click(screen.getByTestId('filter-popover-nav-category-tag'));
     expect(screen.getByLabelText(/filter by tag/i)).toHaveValue('news');
   });
 
@@ -222,18 +250,40 @@ describe('MessageFeedPanel', () => {
     applyDateFilterFrom(
       dayjs('2026-05-01T10:00:00').format('MM/DD/YYYY hh:mm A'),
     );
+    openFilterPopover();
+    fireEvent.click(screen.getByTestId('filter-popover-nav-category-tag'));
     fireEvent.change(screen.getByLabelText(/filter by tag/i), {
-      target: { value: 'news' },
+      target: { value: '' },
     });
-    fireEvent.click(screen.getByTestId('message-tag-filter-apply'));
-    fireEvent.click(screen.getByTestId('message-tag-filter-clear'));
+    applyFilters();
 
     expect(screen.getByTestId('message-feed-empty')).toHaveTextContent(
       'No messages in this date range',
     );
+    openFilterPopover();
+    fireEvent.click(screen.getByTestId('filter-popover-nav-date-time'));
     expect(
       screen.getByTestId('message-date-filter-from').querySelector('input'),
     ).not.toHaveValue('');
+  });
+
+  it('clears all filters from the popover footer', () => {
+    renderMessageFeedPanel();
+    applyTagFilter('news');
+    applyDateFilterFrom(
+      dayjs('2026-05-01T10:00:00').format('MM/DD/YYYY hh:mm A'),
+    );
+
+    openFilterPopover();
+    fireEvent.click(screen.getByTestId('message-feed-filters-clear-all'));
+
+    expect(screen.getByTestId('message-feed-empty')).toHaveTextContent(
+      'No messages yet',
+    );
+    expect(screen.getByTestId('message-feed-filter-trigger')).toHaveAttribute(
+      'class',
+      expect.stringContaining('outlined'),
+    );
   });
 
   it('hides empty state while a refetch is in progress', () => {
