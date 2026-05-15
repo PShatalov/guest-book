@@ -1,5 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Pool } from 'pg';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
@@ -125,6 +126,23 @@ describe('MessagesController (e2e)', () => {
   });
 
   describe('GET /messages', () => {
+    async function setMessageCreatedAt(
+      messageId: string,
+      createdAt: string,
+    ): Promise<void> {
+      const pool = new Pool({ connectionString: databaseUrl });
+
+      try {
+        await pool.query(
+          `UPDATE messages SET created_at = $1::timestamptz WHERE id = $2::uuid`,
+          [createdAt, messageId],
+        );
+        await pool.query(`REFRESH MATERIALIZED VIEW "message_feed"`);
+      } finally {
+        await pool.end();
+      }
+    }
+
     async function seedMessages(
       agent: Awaited<ReturnType<typeof registerAndLogin>>,
       entries: Array<{ text: string; categoryTag: string }>,
@@ -291,6 +309,207 @@ describe('MessagesController (e2e)', () => {
         .expect((res) => {
           expect(res.body.statusCode).toBe(400);
           expect(res.body.message).toEqual(expect.any(Array));
+        });
+    });
+
+    it('filters by createdFrom and createdTo bounds', async () => {
+      const agent = await registerAndLogin(
+        app,
+        uniqueUsername('date_filter_author'),
+      );
+
+      const oldest = await agent
+        .post('/messages')
+        .send({ text: 'Oldest post', categoryTag: 'general' })
+        .expect(201);
+      const middle = await agent
+        .post('/messages')
+        .send({ text: 'Middle post', categoryTag: 'news' })
+        .expect(201);
+      const newest = await agent
+        .post('/messages')
+        .send({ text: 'Newest post', categoryTag: 'general' })
+        .expect(201);
+
+      const oldestAt = '2026-05-15T10:00:00.000Z';
+      const middleAt = '2026-05-15T12:00:00.000Z';
+      const newestAt = '2026-05-15T14:00:00.000Z';
+
+      await setMessageCreatedAt(oldest.body.id, oldestAt);
+      await setMessageCreatedAt(middle.body.id, middleAt);
+      await setMessageCreatedAt(newest.body.id, newestAt);
+
+      const windowed = await request(app.getHttpServer())
+        .get('/messages')
+        .query({ createdFrom: middleAt, createdTo: middleAt })
+        .expect(200);
+
+      expect(windowed.body.items).toHaveLength(1);
+      expect(windowed.body.items[0]).toMatchObject({
+        id: middle.body.id,
+        text: 'Middle post',
+      });
+
+      const lowerOnly = await request(app.getHttpServer())
+        .get('/messages')
+        .query({ createdFrom: middleAt })
+        .expect(200);
+
+      expect(
+        lowerOnly.body.items.map((item: { id: string }) => item.id),
+      ).toEqual(expect.arrayContaining([middle.body.id, newest.body.id]));
+      expect(
+        lowerOnly.body.items.map((item: { id: string }) => item.id),
+      ).not.toContain(oldest.body.id);
+
+      const upperOnly = await request(app.getHttpServer())
+        .get('/messages')
+        .query({ createdTo: middleAt })
+        .expect(200);
+
+      expect(
+        upperOnly.body.items.map((item: { id: string }) => item.id),
+      ).toEqual(expect.arrayContaining([oldest.body.id, middle.body.id]));
+      expect(
+        upperOnly.body.items.map((item: { id: string }) => item.id),
+      ).not.toContain(newest.body.id);
+    });
+
+    it('composes date bounds with category tag and pagination', async () => {
+      const agent = await registerAndLogin(
+        app,
+        uniqueUsername('date_tag_paginate'),
+      );
+
+      const first = await agent
+        .post('/messages')
+        .send({ text: 'General one', categoryTag: 'general' })
+        .expect(201);
+      const second = await agent
+        .post('/messages')
+        .send({ text: 'News one', categoryTag: 'news' })
+        .expect(201);
+      const third = await agent
+        .post('/messages')
+        .send({ text: 'General two', categoryTag: 'general' })
+        .expect(201);
+
+      const rangeStart = '2026-05-15T10:00:00.000Z';
+      const rangeMiddle = '2026-05-15T12:00:00.000Z';
+      const rangeEnd = '2026-05-15T14:00:00.000Z';
+
+      await setMessageCreatedAt(first.body.id, rangeStart);
+      await setMessageCreatedAt(second.body.id, rangeMiddle);
+      await setMessageCreatedAt(third.body.id, rangeEnd);
+
+      const firstPage = await request(app.getHttpServer())
+        .get('/messages')
+        .query({
+          createdFrom: rangeStart,
+          createdTo: rangeEnd,
+          categoryTag: 'general',
+          limit: 1,
+        })
+        .expect(200);
+
+      expect(firstPage.body.items).toHaveLength(1);
+      expect(firstPage.body.items[0].categoryTag).toBe('general');
+      expect(firstPage.body.hasMore).toBe(true);
+
+      const secondPage = await request(app.getHttpServer())
+        .get('/messages')
+        .query({
+          createdFrom: rangeStart,
+          createdTo: rangeEnd,
+          categoryTag: 'general',
+          limit: 1,
+          cursor: firstPage.body.nextCursor,
+        })
+        .expect(200);
+
+      expect(secondPage.body.items).toHaveLength(1);
+      expect(secondPage.body.items[0].categoryTag).toBe('general');
+      expect(secondPage.body.items[0].id).not.toBe(firstPage.body.items[0].id);
+    });
+
+    it('returns 400 when createdFrom is after createdTo', async () => {
+      await request(app.getHttpServer())
+        .get('/messages')
+        .query({
+          createdFrom: '2026-05-16T12:00:00.000Z',
+          createdTo: '2026-05-15T12:00:00.000Z',
+        })
+        .expect(400)
+        .expect((res) => {
+          expect(res.body.message).toEqual(
+            expect.arrayContaining(['createdFrom must not be after createdTo']),
+          );
+        });
+    });
+
+    it('returns 400 for malformed date-time bounds', async () => {
+      await request(app.getHttpServer())
+        .get('/messages')
+        .query({ createdFrom: 'not-a-date' })
+        .expect(400)
+        .expect((res) => {
+          expect(res.body.statusCode).toBe(400);
+          expect(res.body.message).toEqual(expect.any(Array));
+        });
+
+      await request(app.getHttpServer())
+        .get('/messages')
+        .query({ createdTo: '2026-13-40T25:99:99.000Z' })
+        .expect(400)
+        .expect((res) => {
+          expect(res.body.statusCode).toBe(400);
+          expect(res.body.message).toEqual(expect.any(Array));
+        });
+    });
+
+    it('returns 400 for empty or whitespace-only date-time bounds', async () => {
+      await request(app.getHttpServer())
+        .get('/messages')
+        .query({ createdFrom: '' })
+        .expect(400)
+        .expect((res) => {
+          expect(res.body.statusCode).toBe(400);
+          expect(res.body.message).toEqual(expect.any(Array));
+        });
+
+      await request(app.getHttpServer())
+        .get('/messages')
+        .query({ createdTo: '   ' })
+        .expect(400)
+        .expect((res) => {
+          expect(res.body.statusCode).toBe(400);
+          expect(res.body.message).toEqual(expect.any(Array));
+        });
+    });
+
+    it('allows unauthenticated list requests with date bounds', async () => {
+      const agent = await registerAndLogin(
+        app,
+        uniqueUsername('public_date_bounds'),
+      );
+      const created = await agent
+        .post('/messages')
+        .send({ text: 'Public read', categoryTag: 'general' })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .get('/messages')
+        .query({
+          createdFrom: '2020-01-01T00:00:00.000Z',
+          createdTo: '2030-01-01T00:00:00.000Z',
+        })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.items).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({ id: created.body.id }),
+            ]),
+          );
         });
     });
   });

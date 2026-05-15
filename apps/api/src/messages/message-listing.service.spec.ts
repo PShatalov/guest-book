@@ -47,6 +47,8 @@ describe('MessageListingService', () => {
       limit: 20,
       cursor: undefined,
       categoryTag: undefined,
+      createdFrom: undefined,
+      createdTo: undefined,
     });
   });
 
@@ -124,6 +126,47 @@ describe('MessageListingService', () => {
         },
       }),
     );
+  });
+
+  it('passes parsed createdFrom and createdTo bounds to the repository', async () => {
+    await service.list({
+      createdFrom: '2026-05-15T00:00:00.000Z',
+      createdTo: '2026-05-15T23:59:59.999Z',
+    });
+
+    expect(repository.findPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        createdFrom: new Date('2026-05-15T00:00:00.000Z'),
+        createdTo: new Date('2026-05-15T23:59:59.999Z'),
+      }),
+    );
+  });
+
+  it('rejects when createdFrom is after createdTo', async () => {
+    await expect(
+      service.list({
+        createdFrom: '2026-05-16T12:00:00.000Z',
+        createdTo: '2026-05-15T12:00:00.000Z',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(repository.findPage).not.toHaveBeenCalled();
+  });
+
+  it('rejects a whitespace-only createdFrom bound', async () => {
+    await expect(service.list({ createdFrom: '   ' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+
+    expect(repository.findPage).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unparseable createdTo bound', async () => {
+    await expect(
+      service.list({ createdTo: 'not-a-date' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(repository.findPage).not.toHaveBeenCalled();
   });
 
   it('sets nextCursor when exactly limit rows exist and hasMore is true', async () => {

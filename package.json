@@ -14,11 +14,20 @@
     "test:e2e:db": "pnpm --filter @guest-book/api test:e2e:db",
     "db:studio": "pnpm --filter @guest-book/api db:studio",
     "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
     "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,json,md}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,json,md}\"",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,json,md}": "prettier --write",
+    "apps/api/**/*.{ts,js,mjs}": "eslint --max-warnings=0 -c apps/api/eslint.config.mjs",
+    "apps/web/**/*.{ts,tsx,js,mjs}": "eslint --max-warnings=0 -c apps/web/eslint.config.mjs"
   },
   "devDependencies": {
     "eslint": "9.18.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.4",
     "prettier": "3.4.2",
     "turbo": "2.5.4",
     "typescript": "5.7.3"

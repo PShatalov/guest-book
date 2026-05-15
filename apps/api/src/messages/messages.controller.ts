@@ -48,7 +48,8 @@ export class MessagesController {
 
   @Get()
   @ApiOperation({
-    summary: 'List messages with cursor pagination and optional tag filter',
+    summary:
+      'List messages with cursor pagination, optional tag filter, and optional createdFrom/createdTo date-time bounds',
   })
   @ApiOkResponse({ type: PaginatedMessagesResponseDto })
   @ApiBadRequestResponse({ description: 'Validation failed' })

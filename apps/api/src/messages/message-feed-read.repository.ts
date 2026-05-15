@@ -43,6 +43,8 @@ export class MessageFeedReadRepository {
     limit: number;
     cursor?: { createdAt: Date; id: string };
     categoryTag?: string;
+    createdFrom?: Date;
+    createdTo?: Date;
   }): Promise<MessageFeedPage> {
     const db = this.requireDb();
     const fetchLimit = input.limit + 1;
@@ -50,6 +52,14 @@ export class MessageFeedReadRepository {
 
     if (input.categoryTag !== undefined) {
       conditions.push(sql`category_tag = ${input.categoryTag}`);
+    }
+
+    if (input.createdFrom !== undefined) {
+      conditions.push(sql`created_at >= ${input.createdFrom}::timestamptz`);
+    }
+
+    if (input.createdTo !== undefined) {
+      conditions.push(sql`created_at <= ${input.createdTo}::timestamptz`);
     }
 
     if (input.cursor) {

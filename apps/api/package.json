@@ -10,6 +10,7 @@
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main.js",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "test": "jest --selectProjects unit",
     "test:e2e:api": "jest --selectProjects e2e-db --forceExit --runInBand",
     "test:e2e:http": "jest test/health.e2e-spec.ts",
