@@ -26,12 +26,22 @@ export class UserAuthenticationService {
     username: string;
     password: string;
   }): Promise<SafeUserDto> {
+    if (input.username.includes('\0') || input.password.includes('\0')) {
+      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
+    }
+
     const user = await this.userAccountsRepository.findByUsername(
       input.username,
     );
     const hashToVerify =
       user?.passwordHash ?? (await this.getDummyPasswordHash());
-    const passwordMatches = await argon2.verify(hashToVerify, input.password);
+
+    let passwordMatches = false;
+    try {
+      passwordMatches = await argon2.verify(hashToVerify, input.password);
+    } catch {
+      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
+    }
 
     if (!user || !passwordMatches) {
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);

@@ -123,12 +123,24 @@ export class MessageListingService {
     return parsed;
   }
 
+  private rejectInvalidFilterChars(value: string, field: string): void {
+    if (value.includes('\0')) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: [`${field} contains invalid characters`],
+        error: 'Bad Request',
+      });
+    }
+  }
+
   private normalizeCategoryTagFilter(
     categoryTag: string | undefined,
   ): string | undefined {
     if (categoryTag === undefined) {
       return undefined;
     }
+
+    this.rejectInvalidFilterChars(categoryTag, 'categoryTag');
 
     const normalized = categoryTag.trim().toLowerCase();
 
@@ -157,6 +169,8 @@ export class MessageListingService {
     if (authorUsername === undefined) {
       return undefined;
     }
+
+    this.rejectInvalidFilterChars(authorUsername, 'authorUsername');
 
     const normalized = authorUsername.trim();
 

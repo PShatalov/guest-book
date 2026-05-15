@@ -573,4 +573,217 @@ describe('MessagesController (e2e)', () => {
         });
     });
   });
+
+  describe('PATCH /messages/:id', () => {
+    async function createMessage(
+      agent: Awaited<ReturnType<typeof registerAndLogin>>,
+      text = 'Original text',
+      categoryTag = 'general',
+    ) {
+      const response = await agent
+        .post('/messages')
+        .send({ text, categoryTag })
+        .expect(201);
+      return response.body as { id: string; authorUsername: string };
+    }
+
+    it('updates a message for the author', async () => {
+      const agent = await registerAndLogin(app, uniqueUsername('patch_author'));
+      const created = await createMessage(agent);
+
+      const response = await agent
+        .patch(`/messages/${created.id}`)
+        .send({ text: 'Updated text', categoryTag: 'News' })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        id: created.id,
+        text: 'Updated text',
+        categoryTag: 'news',
+        authorUsername: created.authorUsername,
+      });
+      expect(response.body.createdAt).toEqual(expect.any(String));
+
+      await request(app.getHttpServer())
+        .get('/messages')
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.items).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                id: created.id,
+                text: 'Updated text',
+                categoryTag: 'news',
+              }),
+            ]),
+          );
+        });
+    });
+
+    it('returns 401 when not authenticated', async () => {
+      const agent = await registerAndLogin(app, uniqueUsername('patch_unauth'));
+      const created = await createMessage(agent);
+
+      await request(app.getHttpServer())
+        .patch(`/messages/${created.id}`)
+        .send({ text: 'Updated', categoryTag: 'general' })
+        .expect(401)
+        .expect((res) => {
+          expect(res.body.message).toContain('Not authenticated');
+        });
+    });
+
+    it('returns 403 when authenticated as a non-author', async () => {
+      const author = await registerAndLogin(app, uniqueUsername('patch_owner'));
+      const created = await createMessage(author);
+      const other = await registerAndLogin(app, uniqueUsername('patch_other'));
+
+      await other
+        .patch(`/messages/${created.id}`)
+        .send({ text: 'Stolen edit', categoryTag: 'general' })
+        .expect(403)
+        .expect((res) => {
+          expect(res.body.message).toContain('only edit your own messages');
+        });
+    });
+
+    it('returns 404 when the message does not exist', async () => {
+      const agent = await registerAndLogin(
+        app,
+        uniqueUsername('patch_missing'),
+      );
+
+      await agent
+        .patch('/messages/550e8400-e29b-41d4-a716-446655440000')
+        .send({ text: 'Updated', categoryTag: 'general' })
+        .expect(404)
+        .expect((res) => {
+          expect(res.body.message).toContain('Message not found');
+        });
+    });
+
+    it('returns 400 for invalid body and invalid id', async () => {
+      const agent = await registerAndLogin(
+        app,
+        uniqueUsername('patch_invalid'),
+      );
+      const created = await createMessage(agent);
+
+      await agent
+        .patch(`/messages/${created.id}`)
+        .send({ text: '', categoryTag: 'general' })
+        .expect(400)
+        .expect((res) => {
+          expect(res.body.statusCode).toBe(400);
+          expect(res.body.message).toEqual(expect.any(Array));
+        });
+
+      await agent
+        .patch(`/messages/${created.id}`)
+        .send({ text: 'a'.repeat(241), categoryTag: 'general' })
+        .expect(400);
+
+      await agent
+        .patch(`/messages/${created.id}`)
+        .send({ text: 'Valid', categoryTag: '   ' })
+        .expect(400)
+        .expect((res) => {
+          expect(res.body.message).toEqual(
+            expect.arrayContaining(['categoryTag must not be empty']),
+          );
+        });
+
+      await agent
+        .patch('/messages/not-a-uuid')
+        .send({ text: 'Updated', categoryTag: 'general' })
+        .expect(400)
+        .expect((res) => {
+          expect(res.body.message).toContain(
+            'Validation failed (uuid is expected)',
+          );
+        });
+    });
+  });
+
+  describe('DELETE /messages/:id', () => {
+    async function createMessage(
+      agent: Awaited<ReturnType<typeof registerAndLogin>>,
+    ) {
+      const response = await agent
+        .post('/messages')
+        .send({ text: 'To delete', categoryTag: 'general' })
+        .expect(201);
+      return response.body as { id: string };
+    }
+
+    it('deletes a message for the author', async () => {
+      const agent = await registerAndLogin(
+        app,
+        uniqueUsername('delete_author'),
+      );
+      const created = await createMessage(agent);
+
+      await agent.delete(`/messages/${created.id}`).expect(204);
+
+      await request(app.getHttpServer())
+        .get('/messages')
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.items).not.toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({ id: created.id }),
+            ]),
+          );
+        });
+    });
+
+    it('returns 401 when not authenticated', async () => {
+      const agent = await registerAndLogin(
+        app,
+        uniqueUsername('delete_unauth'),
+      );
+      const created = await createMessage(agent);
+
+      await request(app.getHttpServer())
+        .delete(`/messages/${created.id}`)
+        .expect(401)
+        .expect((res) => {
+          expect(res.body.message).toContain('Not authenticated');
+        });
+    });
+
+    it('returns 403 when authenticated as a non-author', async () => {
+      const author = await registerAndLogin(
+        app,
+        uniqueUsername('delete_owner'),
+      );
+      const created = await createMessage(author);
+      const other = await registerAndLogin(app, uniqueUsername('delete_other'));
+
+      await other.delete(`/messages/${created.id}`).expect(403);
+    });
+
+    it('returns 404 when the message does not exist', async () => {
+      const agent = await registerAndLogin(
+        app,
+        uniqueUsername('delete_missing'),
+      );
+
+      await agent
+        .delete('/messages/550e8400-e29b-41d4-a716-446655440000')
+        .expect(404)
+        .expect((res) => {
+          expect(res.body.message).toContain('Message not found');
+        });
+    });
+
+    it('returns 400 for an invalid message id', async () => {
+      const agent = await registerAndLogin(
+        app,
+        uniqueUsername('delete_invalid_id'),
+      );
+
+      await agent.delete('/messages/not-a-uuid').expect(400);
+    });
+  });
 });
