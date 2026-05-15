@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiOkResponse,
@@ -33,6 +34,7 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register a new user and start a session' })
   @ApiCreatedResponse({ type: AuthUserResponseDto })
+  @ApiBadRequestResponse({ description: 'Validation failed' })
   @ApiConflictResponse({ description: 'Username already exists' })
   async register(
     @Body() body: RegisterRequestDto,
@@ -46,6 +48,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign in with username and password' })
   @ApiOkResponse({ type: AuthUserResponseDto })
+  @ApiBadRequestResponse({ description: 'Validation failed' })
   @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
   async login(
     @Body() body: LoginRequestDto,
