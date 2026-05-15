@@ -16,7 +16,9 @@ const parseErrorMessages = (body: unknown): string | string[] => {
     return record.message;
   }
   if (Array.isArray(record.message)) {
-    return record.message.filter((item): item is string => typeof item === 'string');
+    return record.message.filter(
+      (item): item is string => typeof item === 'string',
+    );
   }
   return 'Request failed';
 };

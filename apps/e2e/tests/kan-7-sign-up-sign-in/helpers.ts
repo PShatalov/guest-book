@@ -11,7 +11,10 @@ async function fillControlledInput(locator: Locator, value: string) {
   await locator.click();
   await locator.fill(value);
   await locator.evaluate((element, nextValue) => {
-    const input = element as { value: string; dispatchEvent: (event: Event) => boolean };
+    const input = element as {
+      value: string;
+      dispatchEvent: (event: Event) => boolean;
+    };
     const valueSetter = Object.getOwnPropertyDescriptor(
       Object.getPrototypeOf(input),
       'value',
@@ -50,7 +53,8 @@ export async function fillLoginForm(
 
 export async function submitSignUp(page: Page) {
   const responsePromise = page.waitForResponse(
-    (r) => r.url().includes('/auth/register') && r.request().method() === 'POST',
+    (r) =>
+      r.url().includes('/auth/register') && r.request().method() === 'POST',
     { timeout: TIMEOUT },
   );
   await page.getByRole('button', { name: 'Sign up' }).click();
@@ -80,7 +84,9 @@ export async function submitSignIn(page: Page) {
   await page.getByRole('button', { name: 'Sign in' }).click();
   const response = await responsePromise;
   if (!response.ok()) {
-    throw new Error(`Login failed: ${response.status()} ${await response.text()}`);
+    throw new Error(
+      `Login failed: ${response.status()} ${await response.text()}`,
+    );
   }
 }
 

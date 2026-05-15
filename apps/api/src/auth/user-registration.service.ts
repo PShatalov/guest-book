@@ -1,4 +1,8 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { validatePasswordPolicy } from '../common/validators/password-policy.validator';
 import { UsernameAlreadyExistsError } from './errors/username-already-exists.error';

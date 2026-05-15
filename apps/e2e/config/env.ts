@@ -36,7 +36,9 @@ function envOrDefault(
   return env[name] ?? fallback;
 }
 
-export function buildTestDatabaseUrl(env: NodeJS.ProcessEnv = process.env): string {
+export function buildTestDatabaseUrl(
+  env: NodeJS.ProcessEnv = process.env,
+): string {
   if (env.E2E_DATABASE_URL) {
     return env.E2E_DATABASE_URL;
   }
@@ -60,14 +62,10 @@ export function assertTestDatabaseUrl(databaseUrl: string): void {
 
   const database = parsed.pathname.replace(/^\//, '');
   const port = parsed.port || '5432';
-  const isTestDatabase =
-    database === 'guestbook_test' && port === '5433';
+  const isTestDatabase = database === 'guestbook_test' && port === '5433';
 
   if (!isTestDatabase) {
-    const redacted = databaseUrl.replace(
-      /:\/\/([^:]+):([^@]+)@/,
-      '://$1:***@',
-    );
+    const redacted = databaseUrl.replace(/:\/\/([^:]+):([^@]+)@/, '://$1:***@');
     throw new Error(
       `E2E must use the isolated test database (postgresql://guestbook_test:***@127.0.0.1:5433/guestbook_test), not: ${redacted}`,
     );
@@ -85,7 +83,9 @@ export type E2eConfig = {
   sessionSecret: string;
 };
 
-export function resolveE2eConfig(env: NodeJS.ProcessEnv = process.env): E2eConfig {
+export function resolveE2eConfig(
+  env: NodeJS.ProcessEnv = process.env,
+): E2eConfig {
   const webHost = env.E2E_WEB_HOST ?? 'localhost';
   const apiHost = env.E2E_API_HOST ?? 'localhost';
   const reuseExistingServer = shouldReuseServers(env);
@@ -120,8 +120,7 @@ export function resolveE2eConfig(env: NodeJS.ProcessEnv = process.env): E2eConfi
   }
 
   const databaseUrl = buildTestDatabaseUrl(env);
-  const sessionSecret =
-    env.E2E_SESSION_SECRET ?? DEFAULT_SESSION_SECRET;
+  const sessionSecret = env.E2E_SESSION_SECRET ?? DEFAULT_SESSION_SECRET;
 
   return {
     webHost,

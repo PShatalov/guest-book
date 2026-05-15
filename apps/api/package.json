@@ -66,12 +66,20 @@
       {
         "displayName": "unit",
         "rootDir": ".",
-        "moduleFileExtensions": ["js", "json", "ts"],
-        "testMatch": ["<rootDir>/src/**/*.spec.ts"],
+        "moduleFileExtensions": [
+          "js",
+          "json",
+          "ts"
+        ],
+        "testMatch": [
+          "<rootDir>/src/**/*.spec.ts"
+        ],
         "transform": {
           "^.+\\.(t|j)s$": "ts-jest"
         },
-        "collectCoverageFrom": ["src/**/*.(t|j)s"],
+        "collectCoverageFrom": [
+          "src/**/*.(t|j)s"
+        ],
         "coverageDirectory": "coverage",
         "testEnvironment": "node",
         "moduleNameMapper": {
@@ -82,7 +90,11 @@
         "displayName": "e2e-db",
         "rootDir": ".",
         "maxWorkers": 1,
-        "moduleFileExtensions": ["js", "json", "ts"],
+        "moduleFileExtensions": [
+          "js",
+          "json",
+          "ts"
+        ],
         "testMatch": [
           "<rootDir>/test/auth.e2e-spec.ts",
           "<rootDir>/test/messages.e2e-spec.ts",

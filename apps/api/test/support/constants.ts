@@ -14,7 +14,11 @@ export const TEST_MIGRATION_PATHS = [
   path.join(REPO_ROOT, 'apps/api/drizzle/0001_create_messages.sql'),
 ];
 
-export const TEST_TABLES_TO_TRUNCATE = ['session', 'messages', 'users'] as const;
+export const TEST_TABLES_TO_TRUNCATE = [
+  'session',
+  'messages',
+  'users',
+] as const;
 
 export const DEFAULT_TEST_DB = {
   user: 'guestbook_test',

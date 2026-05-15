@@ -58,10 +58,7 @@ describe('MessagesController (e2e)', () => {
   });
 
   it('creates a message for an authenticated user', async () => {
-    const agent = await registerAndLogin(
-      app,
-      uniqueUsername('message_author'),
-    );
+    const agent = await registerAndLogin(app, uniqueUsername('message_author'));
 
     const response = await agent
       .post('/messages')

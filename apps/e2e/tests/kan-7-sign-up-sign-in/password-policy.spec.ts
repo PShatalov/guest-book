@@ -10,9 +10,7 @@ import {
 } from './helpers';
 
 test.describe('Password policy enforced before register submit', () => {
-  test('should block password shorter than 8 characters', async ({
-    page,
-  }) => {
+  test('should block password shorter than 8 characters', async ({ page }) => {
     await gotoRegister(page);
     await fillRegisterForm(page, 'policy_short', 'Ab1!');
     await page.getByRole('button', { name: 'Sign up' }).click();
@@ -58,17 +56,14 @@ test.describe('Password policy enforced before register submit', () => {
     ).toBeVisible({ timeout: TIMEOUT });
   });
 
-  test('should block password without special character', async ({
-    page,
-  }) => {
+  test('should block password without special character', async ({ page }) => {
     await gotoRegister(page);
     await fillRegisterForm(page, 'policy_nospecial', 'Str0ngpass');
     await page.getByRole('button', { name: 'Sign up' }).click();
 
-    await expect(
-      page.getByText(/special character/),
-      'AC-7.4',
-    ).toBeVisible({ timeout: TIMEOUT });
+    await expect(page.getByText(/special character/), 'AC-7.4').toBeVisible({
+      timeout: TIMEOUT,
+    });
   });
 
   test('should not show client policy error for valid password', async ({
@@ -84,6 +79,8 @@ test.describe('Password policy enforced before register submit', () => {
     ).toHaveCount(0);
     await submitSignUp(page);
     await page.waitForURL('/', { timeout: TIMEOUT, waitUntil: 'commit' });
-    await expect(page, 'AC-7.4: reaches API outcome (redirect home)').toHaveURL('/');
+    await expect(page, 'AC-7.4: reaches API outcome (redirect home)').toHaveURL(
+      '/',
+    );
   });
 });
