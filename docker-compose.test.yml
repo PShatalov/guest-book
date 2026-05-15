@@ -1,0 +1,19 @@
+# Ephemeral PostgreSQL for E2E and API database tests (port 5433 by default).
+# Data lives on tmpfs — removed when the container stops.
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-guestbook_test}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-test}
+      POSTGRES_DB: ${POSTGRES_DB:-guestbook_test}
+    ports:
+      - '${POSTGRES_PORT:-5433}:5432'
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 5s

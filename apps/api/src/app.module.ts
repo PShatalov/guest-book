@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { DrizzleModule } from './database/drizzle.module';
+import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -13,6 +14,7 @@ import { HealthModule } from './health/health.module';
     }),
     DrizzleModule,
     HealthModule,
+    AuthModule,
   ],
 })
 export class AppModule {}

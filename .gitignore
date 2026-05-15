@@ -1,4 +1,5 @@
 .agents
+.claude
 .sdlc-cgen
 
 node_modules
@@ -12,4 +13,10 @@ test-results
 *.log
 .env
 .env.local
+.test-db-state.json
+.e2e-runtime.json
 .DS_Store
+.hypothesis
+.venv-schemathesis
+# Agent Playwright sandbox (RECON, reports, generated scratch) — committed tests live in apps/e2e
+.playwright-output

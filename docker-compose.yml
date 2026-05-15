@@ -31,7 +31,11 @@ services:
     environment:
       PORT: '3001'
       NODE_ENV: production
+      # Local Compose serves HTTP; Secure cookies are not sent over plain HTTP.
+      SESSION_COOKIE_SECURE: 'false'
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      SESSION_SECRET: ${SESSION_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
     depends_on:
       postgres:
         condition: service_healthy

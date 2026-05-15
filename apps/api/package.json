@@ -10,29 +10,44 @@
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main.js",
     "lint": "eslint .",
-    "test": "jest",
+    "test": "jest --selectProjects unit",
+    "test:e2e:api": "jest --selectProjects e2e-db --forceExit",
+    "test:e2e:http": "jest test/health.e2e-spec.ts",
+    "test:db:setup": "ts-node test/support/run-db-setup.ts",
+    "test:db:teardown": "ts-node test/support/run-db-teardown.ts",
+    "test:auth": "pnpm run test:e2e:db",
     "test:watch": "jest --watch",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@nestjs/common": "11.1.21",
     "@nestjs/config": "4.0.4",
     "@nestjs/core": "11.1.21",
     "@nestjs/platform-express": "11.1.21",
+    "@nestjs/swagger": "11.2.0",
+    "argon2": "0.43.0",
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
+    "connect-pg-simple": "10.0.0",
+    "cookie-parser": "1.4.7",
     "drizzle-orm": "0.45.2",
+    "express-session": "1.18.1",
+    "helmet": "8.0.0",
     "pg": "8.20.0",
     "reflect-metadata": "0.2.2",
-    "rxjs": "7.8.2"
+    "rxjs": "7.8.2",
+    "swagger-ui-express": "5.0.1"
   },
   "devDependencies": {
     "@guest-book/eslint-config": "workspace:*",
     "@guest-book/typescript-config": "workspace:*",
     "@nestjs/cli": "11.0.21",
     "@nestjs/testing": "11.1.21",
+    "@types/cookie-parser": "1.4.8",
     "@types/express": "5.0.3",
+    "@types/express-session": "1.18.1",
     "@types/jest": "29.5.14",
     "@types/node": "22.15.29",
     "@types/pg": "8.15.4",
@@ -47,23 +62,40 @@
     "typescript": "5.7.3"
   },
   "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": ".",
-    "testRegex": ".*\\.(spec|e2e-spec)\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "src/**/*.(t|j)s"
-    ],
-    "coverageDirectory": "coverage",
-    "testEnvironment": "node",
-    "moduleNameMapper": {
-      "^src/(.*)$": "<rootDir>/src/$1"
-    }
+    "projects": [
+      {
+        "displayName": "unit",
+        "rootDir": ".",
+        "moduleFileExtensions": ["js", "json", "ts"],
+        "testMatch": ["<rootDir>/src/**/*.spec.ts"],
+        "transform": {
+          "^.+\\.(t|j)s$": "ts-jest"
+        },
+        "collectCoverageFrom": ["src/**/*.(t|j)s"],
+        "coverageDirectory": "coverage",
+        "testEnvironment": "node",
+        "moduleNameMapper": {
+          "^src/(.*)$": "<rootDir>/src/$1"
+        }
+      },
+      {
+        "displayName": "e2e-db",
+        "rootDir": ".",
+        "moduleFileExtensions": ["js", "json", "ts"],
+        "testMatch": [
+          "<rootDir>/test/auth.e2e-spec.ts",
+          "<rootDir>/test/support/test-database-harness.integration.spec.ts"
+        ],
+        "globalSetup": "<rootDir>/test/global-setup.ts",
+        "globalTeardown": "<rootDir>/test/global-teardown.ts",
+        "transform": {
+          "^.+\\.(t|j)s$": "ts-jest"
+        },
+        "testEnvironment": "node",
+        "moduleNameMapper": {
+          "^src/(.*)$": "<rootDir>/src/$1"
+        }
+      }
+    ]
   }
 }

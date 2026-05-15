@@ -43,6 +43,7 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      # Unit tests only — no Playwright or API/HTTP e2e (use workflow_dispatch E2E workflow).
       - name: Unit tests
         run: pnpm test
 

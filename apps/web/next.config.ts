@@ -7,10 +7,22 @@ const monorepoRoot = path.join(
   '../..',
 );
 
+/** Backend origin for `/api/*` rewrites (browser uses same-origin `/api` in E2E). */
+const apiProxyTarget =
+  process.env.API_PROXY_TARGET ?? 'http://localhost:3001';
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   turbopack: {
     root: monorepoRoot,
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${apiProxyTarget}/:path*`,
+      },
+    ];
   },
 };
 

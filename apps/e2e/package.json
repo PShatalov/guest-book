@@ -6,12 +6,15 @@
   "scripts": {
     "install:browsers": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium firefox webkit",
     "postinstall": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium firefox webkit",
-    "test:e2e": "playwright test"
+    "free-ports": "bash ./scripts/free-e2e-ports.sh",
+    "test:e2e": "playwright test",
+    "pretest:e2e": "bash ./scripts/free-e2e-ports.sh"
   },
   "devDependencies": {
     "@guest-book/typescript-config": "workspace:*",
     "@playwright/test": "1.51.1",
     "@types/node": "22.15.21",
+    "dotenv": "16.6.1",
     "typescript": "5.7.3"
   }
 }

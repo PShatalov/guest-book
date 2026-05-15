@@ -1,2 +1,1 @@
-// Drizzle schema definitions — extend in domain stories.
-export {};
+export * from './users';
