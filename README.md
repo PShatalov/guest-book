@@ -4,12 +4,12 @@ Monorepo for the guestbook application (message feed, auth, filtering). Orchestr
 
 ## Workspace layout
 
-| Path | Purpose |
-|------|---------|
-| `apps/web` | Next.js frontend |
-| `apps/api` | NestJS API |
+| Path                         | Purpose                   |
+| ---------------------------- | ------------------------- |
+| `apps/web`                   | Next.js frontend          |
+| `apps/api`                   | NestJS API                |
 | `packages/typescript-config` | Shared TypeScript presets |
-| `packages/eslint-config` | Shared ESLint flat config |
+| `packages/eslint-config`     | Shared ESLint flat config |
 
 ## Prerequisites
 
@@ -43,6 +43,15 @@ cp apps/api/.env.example apps/api/.env
 pnpm --filter @guest-book/api start:dev
 curl http://localhost:3001/health
 ```
+
+### Web (Next.js)
+
+```bash
+pnpm --filter @guest-book/web dev
+# http://localhost:3000
+```
+
+Optional: set `NEXT_PUBLIC_API_URL` in `apps/web/.env.local` when connecting to the API (default not required for the foundation scaffold).
 
 ## Turborepo
 
