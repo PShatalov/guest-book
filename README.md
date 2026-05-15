@@ -132,6 +132,35 @@ pnpm run test:e2e
 
 Equivalent to `npm run test:e2e` when using npm at the root. If tests fail with a missing-browser error, re-run `playwright install` in the `apps/e2e` workspace.
 
+## Continuous integration (GitHub Actions)
+
+CI runs automatically on **pull requests** and on **pushes to `main`**. Workflows live under [`.github/workflows/`](.github/workflows/).
+
+### Verify (PR and `main`)
+
+The [CI workflow](.github/workflows/ci.yml) runs on `ubuntu-latest` with Node 20 and pnpm 9:
+
+1. `pnpm install --frozen-lockfile`
+2. `pnpm build` (includes NestJS compile-time checks for the API)
+3. `pnpm --filter @guest-book/web typecheck`
+4. `pnpm lint`
+5. `pnpm test`
+6. `pnpm format:check`
+
+No Docker, Tilt, or PostgreSQL is required for this job. Open the **Actions** tab on GitHub to see logs for a failed step.
+
+**Common fixes:**
+
+- Lockfile out of date — run `pnpm install` locally and commit `pnpm-lock.yaml`.
+- Formatting — run `pnpm format` and commit the diff.
+- Lint or test failures — reproduce locally with the same command shown in the failed step.
+
+### E2E (manual)
+
+The [E2E workflow](.github/workflows/e2e.yml) runs only when triggered manually (**Actions → E2E → Run workflow**). It installs Chromium, runs the Playwright smoke spec against the Next.js dev server, and uploads the HTML report as an artifact if the job fails.
+
+Locally, all three browsers still run via `pnpm test:e2e`; CI uses Chromium only to keep dispatch runs fast.
+
 ## Turborepo
 
 Pipeline definitions live in `turbo.json`. Local caching is enabled by default. Build outputs are declared for `dist/**` and `.next/**` when apps produce them.

@@ -14,4 +14,5 @@ const config: Config = {
   },
 };
 
-export default createJestConfig(config);
+// createJestConfig return type references Jest private types incompatible with declaration emit.
+export default createJestConfig(config) as Config;
