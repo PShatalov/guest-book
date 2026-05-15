@@ -29,7 +29,7 @@ describe('HealthCheckController (e2e)', () => {
     await app.close();
   });
 
-  it('GET /health returns 200 with status ok', () => {
+  it('GET /health returns 200 with database not_configured when DATABASE_URL is unset', () => {
     return request(app.getHttpServer())
       .get('/health')
       .expect(200)
@@ -37,6 +37,7 @@ describe('HealthCheckController (e2e)', () => {
         expect(res.body).toMatchObject({
           status: 'ok',
           service: 'guest-book-api',
+          database: 'not_configured',
         });
         expect(res.body.timestamp).toEqual(expect.any(String));
       });

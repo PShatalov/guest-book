@@ -46,6 +46,32 @@ pnpm --filter @guest-book/api start:dev
 curl http://localhost:3001/health
 ```
 
+### Docker Compose (API + PostgreSQL)
+
+Runs the NestJS API and PostgreSQL with credentials supplied only via environment variables.
+
+**Prerequisites:** [Docker Engine](https://docs.docker.com/engine/) with Compose v2.
+
+```bash
+cp compose.env.example .env
+# Edit .env and set POSTGRES_PASSWORD (and other values if needed)
+
+docker compose up --build
+curl http://localhost:3001/health
+```
+
+A healthy stack returns JSON with `"status":"ok"` and `"database":"up"`. Stop with `docker compose down` (add `-v` to remove the Postgres volume).
+
+| Variable | Purpose |
+| -------- | ------- |
+| `POSTGRES_USER` | PostgreSQL role |
+| `POSTGRES_PASSWORD` | PostgreSQL password |
+| `POSTGRES_DB` | Database name |
+| `POSTGRES_PORT` | Host port mapped to Postgres (default `5432`) |
+| `API_PORT` | Host port mapped to the API (default `3001`) |
+
+The API container receives `DATABASE_URL` built from those values and connects to the `postgres` service hostname on the Compose network.
+
 ### Web (Next.js)
 
 ```bash

@@ -1,4 +1,9 @@
-import { Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  type Provider,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
@@ -14,20 +19,36 @@ function createDrizzleClient(pool: Pool) {
   return drizzle(pool, { schema });
 }
 
-export const drizzleProvider = {
-  provide: DRIZZLE,
-  inject: [ConfigService],
-  useFactory: (configService: ConfigService<AppConfig, true>) => {
-    const databaseUrl = configService.get('databaseUrl', { infer: true });
+@Injectable()
+export class DrizzleDatabaseProvider implements OnModuleDestroy {
+  private pool: Pool | null = null;
+
+  constructor(private readonly configService: ConfigService<AppConfig, true>) {}
+
+  createClient(): DrizzleClient | null {
+    const databaseUrl = this.configService.get('databaseUrl', { infer: true });
 
     if (!databaseUrl) {
-      logger.warn(
-        'DATABASE_URL is not set — Drizzle client unavailable until KAN-6',
-      );
       return null;
     }
 
-    const pool = new Pool({ connectionString: databaseUrl });
-    return createDrizzleClient(pool);
-  },
+    this.pool = new Pool({ connectionString: databaseUrl });
+    return createDrizzleClient(this.pool);
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    if (!this.pool) {
+      return;
+    }
+
+    await this.pool.end();
+    this.pool = null;
+    logger.log('PostgreSQL connection pool closed');
+  }
+}
+
+export const drizzleProvider: Provider = {
+  provide: DRIZZLE,
+  inject: [DrizzleDatabaseProvider],
+  useFactory: (provider: DrizzleDatabaseProvider) => provider.createClient(),
 };
