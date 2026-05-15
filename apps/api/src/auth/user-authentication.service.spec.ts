@@ -69,4 +69,26 @@ describe('UserAuthenticationService', () => {
       service.authenticate({ username: 'missing', password: 'Str0ng!pass' }),
     ).rejects.toThrow('Invalid credentials');
   });
+
+  it('throws unauthorized when credentials contain null bytes', async () => {
+    await expect(
+      service.authenticate({ username: 'ali\0ce', password: 'Str0ng!pass' }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+
+    expect(repository.findByUsername).not.toHaveBeenCalled();
+  });
+
+  it('throws unauthorized when argon2 verification fails', async () => {
+    repository.findByUsername.mockResolvedValue({
+      id: 'user-id',
+      username: 'alice',
+      passwordHash: 'stored-hash',
+      createdAt: new Date(),
+    });
+    mockedArgon2.verify.mockRejectedValue(new Error('argon2 failure'));
+
+    await expect(
+      service.authenticate({ username: 'alice', password: 'bad' }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
 });

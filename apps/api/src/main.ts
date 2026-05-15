@@ -49,6 +49,7 @@ async function bootstrap() {
     'RegisterRequestDto',
     'LoginRequestDto',
     'CreateMessageRequestDto',
+    'UpdateMessageRequestDto',
   ]) {
     const schema = document.components?.schemas?.[schemaName];
     if (schema && typeof schema === 'object' && 'properties' in schema) {

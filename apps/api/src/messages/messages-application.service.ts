@@ -4,10 +4,12 @@ import { AuthSessionService } from '../auth/auth-session.service';
 import type { ListMessagesQueryDto } from './dto/list-messages-query.dto';
 import { MessageCreationService } from './message-creation.service';
 import type { MessageDto } from './message-creation.service';
+import { MessageDeletionService } from './message-deletion.service';
 import {
   MessageListingService,
   type PaginatedMessagesDto,
 } from './message-listing.service';
+import { MessageUpdateService } from './message-update.service';
 
 @Injectable()
 export class MessagesApplicationService {
@@ -15,6 +17,8 @@ export class MessagesApplicationService {
     private readonly authSessionService: AuthSessionService,
     private readonly messageCreationService: MessageCreationService,
     private readonly messageListingService: MessageListingService,
+    private readonly messageUpdateService: MessageUpdateService,
+    private readonly messageDeletionService: MessageDeletionService,
   ) {}
 
   async createMessage(
@@ -27,5 +31,19 @@ export class MessagesApplicationService {
 
   listMessages(query: ListMessagesQueryDto): Promise<PaginatedMessagesDto> {
     return this.messageListingService.list(query);
+  }
+
+  async updateMessage(
+    request: Request,
+    messageId: string,
+    input: { text: string; categoryTag: string },
+  ): Promise<MessageDto> {
+    const author = this.authSessionService.getCurrentUser(request);
+    return this.messageUpdateService.update(author, messageId, input);
+  }
+
+  async deleteMessage(request: Request, messageId: string): Promise<void> {
+    const author = this.authSessionService.getCurrentUser(request);
+    await this.messageDeletionService.delete(author, messageId);
   }
 }

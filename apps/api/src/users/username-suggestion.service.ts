@@ -42,6 +42,14 @@ export class UsernameSuggestionService {
   private normalizeQuery(q: string): string {
     const normalized = q.trim();
 
+    if (normalized.includes('\0')) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: ['q contains invalid characters'],
+        error: 'Bad Request',
+      });
+    }
+
     if (normalized.length === 0) {
       throw new BadRequestException({
         statusCode: 400,

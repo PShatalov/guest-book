@@ -123,6 +123,18 @@ describe('UsersController (e2e)', () => {
         });
     });
 
+    it('returns 400 when query contains null bytes', async () => {
+      await request(app.getHttpServer())
+        .get('/users/username-suggest')
+        .query({ q: 'ali\0ce' })
+        .expect(400)
+        .expect((res) => {
+          expect(res.body.message).toEqual(
+            expect.arrayContaining(['q contains invalid characters']),
+          );
+        });
+    });
+
     it('returns 400 for an invalid limit', async () => {
       await request(app.getHttpServer())
         .get('/users/username-suggest')

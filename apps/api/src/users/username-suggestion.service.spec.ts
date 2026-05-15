@@ -46,6 +46,14 @@ describe('UsernameSuggestionService', () => {
     expect(repository.findUsernamesContaining).not.toHaveBeenCalled();
   });
 
+  it('rejects a query containing null bytes', async () => {
+    await expect(service.suggest({ q: 'ali\0ce' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+
+    expect(repository.findUsernamesContaining).not.toHaveBeenCalled();
+  });
+
   it('rejects a query longer than 64 characters', async () => {
     await expect(service.suggest({ q: 'a'.repeat(65) })).rejects.toBeInstanceOf(
       BadRequestException,

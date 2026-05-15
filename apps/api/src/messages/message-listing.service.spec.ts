@@ -69,6 +69,14 @@ describe('MessageListingService', () => {
     expect(repository.findPage).not.toHaveBeenCalled();
   });
 
+  it('rejects a category tag containing null bytes', async () => {
+    await expect(
+      service.list({ categoryTag: 'gen\0eral' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(repository.findPage).not.toHaveBeenCalled();
+  });
+
   it('trims the author username filter before querying', async () => {
     await service.list({ authorUsername: ' Alice ' });
 
