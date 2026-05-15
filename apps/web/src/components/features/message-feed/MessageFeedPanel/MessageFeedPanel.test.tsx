@@ -57,6 +57,16 @@ jest.mock('@/components/shared/messages/useMessagesInfiniteQuery', () => ({
   useMessagesInfiniteQuery: () => mockQueryState,
 }));
 
+jest.mock('@/components/shared/auth/useAuthSession', () => ({
+  useAuthSession: () => ({
+    username: null,
+    isPending: false,
+    isError: false,
+    error: null,
+    refetch: jest.fn(),
+  }),
+}));
+
 const renderMessageFeedPanel = () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },

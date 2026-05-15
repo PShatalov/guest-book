@@ -8,6 +8,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useMemo, useState } from 'react';
 
+import { useAuthSession } from '@/components/shared/auth/useAuthSession';
 import { useMessagesInfiniteQuery } from '@/components/shared/messages/useMessagesInfiniteQuery';
 import type { MessageDateRangeFilter } from '@/lib/messages/messageDateRange';
 
@@ -17,6 +18,7 @@ import { messageFeedPanelStyles } from './MessageFeedPanel.styles';
 import { getMessageFeedEmptyCopy } from './messageFeedEmptyCopy';
 
 export const MessageFeedPanel = () => {
+  const { username } = useAuthSession();
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [activeAuthorUsername, setActiveAuthorUsername] = useState<
     string | null
@@ -125,7 +127,9 @@ export const MessageFeedPanel = () => {
                 {emptyMessage}
               </Typography>
             ) : null}
-            {items.length > 0 ? <MessageFeedList items={items} /> : null}
+            {items.length > 0 ? (
+              <MessageFeedList currentUsername={username} items={items} />
+            ) : null}
           </Box>
           {hasNextPage ? (
             <Button

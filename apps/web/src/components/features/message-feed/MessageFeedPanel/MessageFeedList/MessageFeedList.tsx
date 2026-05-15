@@ -7,15 +7,23 @@ import { MessageListItem } from '../../MessageListItem';
 import { messageFeedPanelStyles } from '../MessageFeedPanel.styles';
 
 export type MessageFeedListProps = {
+  currentUsername?: string | null;
   items: Message[];
 };
 
-export const MessageFeedList = ({ items }: MessageFeedListProps) => {
+export const MessageFeedList = ({
+  currentUsername = null,
+  items,
+}: MessageFeedListProps) => {
   return (
     <Box sx={messageFeedPanelStyles.list}>
       <List disablePadding>
         {items.map((message) => (
-          <MessageListItem key={message.id} message={message} />
+          <MessageListItem
+            currentUsername={currentUsername}
+            key={message.id}
+            message={message}
+          />
         ))}
       </List>
     </Box>
