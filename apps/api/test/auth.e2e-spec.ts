@@ -1,33 +1,11 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../src/app.module';
-import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
-import { configureSessionMiddleware } from '../src/common/session/configure-session.middleware';
+import { createTestApp } from './support/create-test-app';
 import { TestDatabaseCleaner } from './support/test-database-cleaner';
 
 function uniqueUsername(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-async function createAuthApp(): Promise<INestApplication<App>> {
-  const moduleFixture: TestingModule = await Test.createTestingModule({
-    imports: [AppModule],
-  }).compile();
-
-  const app = moduleFixture.createNestApplication();
-  configureSessionMiddleware(app);
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
-  app.useGlobalFilters(new GlobalExceptionFilter());
-  await app.init();
-  return app;
 }
 
 describe('AuthController (e2e)', () => {
@@ -37,7 +15,7 @@ describe('AuthController (e2e)', () => {
 
   beforeEach(async () => {
     await cleaner.truncateTables(databaseUrl);
-    app = await createAuthApp();
+    app = await createTestApp();
   });
 
   afterEach(async () => {

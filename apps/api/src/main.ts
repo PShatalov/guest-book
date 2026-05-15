@@ -2,10 +2,10 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { JsonObjectBodyPipe } from './common/pipes/json-object-body.pipe';
+import { configureSecurityMiddleware } from './common/security/configure-security.middleware';
 import { configureSessionMiddleware } from './common/session/configure-session.middleware';
 import type { AppConfig } from './config/configuration';
 
@@ -13,7 +13,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService<AppConfig, true>);
 
-  app.use(helmet());
+  configureSecurityMiddleware(app, {
+    trustProxy: configService.get('trustProxy', { infer: true }),
+    nodeEnv: configService.get('nodeEnv', { infer: true }),
+    sessionCookieSecure: configService.get('sessionCookieSecure', {
+      infer: true,
+    }),
+  });
 
   const corsOrigin = configService.get('corsOrigin', { infer: true });
   if (corsOrigin) {

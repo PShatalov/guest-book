@@ -18,7 +18,9 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
+import { AUTH_ROUTE_THROTTLE } from '../config/security-defaults';
 import { AuthenticatedSessionGuard } from '../common/guards/authenticated-session.guard';
 import { AuthApplicationService } from './auth-application.service';
 import { AuthUserResponseDto } from './dto/auth-user-response.dto';
@@ -32,6 +34,7 @@ export class AuthController {
     private readonly authApplicationService: AuthApplicationService,
   ) {}
 
+  @Throttle(AUTH_ROUTE_THROTTLE)
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register a new user and start a session' })
@@ -46,6 +49,7 @@ export class AuthController {
     return { username: user.username };
   }
 
+  @Throttle(AUTH_ROUTE_THROTTLE)
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign in with username and password' })
