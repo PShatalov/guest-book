@@ -14,6 +14,7 @@ import { messageKeys } from '../messageKeys';
 const DEFAULT_PAGE_SIZE = 5;
 
 export type MessagesFeedFilters = {
+  authorUsername: string | null;
   categoryTag: string | null;
   dateRange: MessageDateRangeFilter | null;
 };
@@ -21,6 +22,7 @@ export type MessagesFeedFilters = {
 type ListMessagesParams = {
   limit?: number;
   cursor?: string;
+  authorUsername?: string;
   categoryTag?: string;
   createdFrom?: string;
   createdTo?: string;
@@ -29,6 +31,7 @@ type ListMessagesParams = {
 const buildMessagesPath = ({
   limit = DEFAULT_PAGE_SIZE,
   cursor,
+  authorUsername,
   categoryTag,
   createdFrom,
   createdTo,
@@ -37,6 +40,9 @@ const buildMessagesPath = ({
   search.set('limit', String(limit));
   if (cursor !== undefined) {
     search.set('cursor', cursor);
+  }
+  if (authorUsername !== undefined) {
+    search.set('authorUsername', authorUsername);
   }
   if (categoryTag !== undefined) {
     search.set('categoryTag', categoryTag);
@@ -58,7 +64,7 @@ const parsePaginatedMessages = (data: unknown): PaginatedMessages => {
 };
 
 export const useMessagesInfiniteQuery = (filters: MessagesFeedFilters) => {
-  const { categoryTag, dateRange } = filters;
+  const { authorUsername, categoryTag, dateRange } = filters;
 
   return useInfiniteQuery<
     PaginatedMessages,
@@ -67,11 +73,12 @@ export const useMessagesInfiniteQuery = (filters: MessagesFeedFilters) => {
     ReturnType<typeof messageKeys.list>,
     string | undefined
   >({
-    queryKey: messageKeys.list({ categoryTag, dateRange }),
+    queryKey: messageKeys.list({ authorUsername, categoryTag, dateRange }),
     queryFn: async ({ pageParam, signal }) => {
       const data = await apiFetchClient<unknown>(
         buildMessagesPath({
           cursor: pageParam,
+          authorUsername: authorUsername ?? undefined,
           categoryTag: categoryTag ?? undefined,
           createdFrom: dateRange?.createdFrom,
           createdTo: dateRange?.createdTo,

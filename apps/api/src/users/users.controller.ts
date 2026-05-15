@@ -19,7 +19,7 @@ export class UsersController {
   @Get('username-suggest')
   @ApiOperation({
     summary:
-      'Suggest usernames matching a prefix for typeahead (public, case-insensitive)',
+      'Suggest usernames containing the query for typeahead (public, case-insensitive)',
   })
   @ApiOkResponse({ type: UsernameSuggestResponseDto })
   @ApiBadRequestResponse({ description: 'Validation failed' })

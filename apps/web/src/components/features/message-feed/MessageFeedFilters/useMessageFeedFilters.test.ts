@@ -1,12 +1,19 @@
 import { act, renderHook } from '@testing-library/react';
 import dayjs from 'dayjs';
 
-import { useMessageFeedFilters } from './useMessageFeedFilters';
+import {
+  MESSAGE_FEED_FILTER_SECTION_IDS,
+  useMessageFeedFilters,
+} from './useMessageFeedFilters';
 
 describe('useMessageFeedFilters', () => {
   it('validates whitespace-only tag drafts on apply', () => {
     const { result } = renderHook(() =>
-      useMessageFeedFilters({ activeDateRange: null, activeTag: null }),
+      useMessageFeedFilters({
+        activeAuthorUsername: null,
+        activeDateRange: null,
+        activeTag: null,
+      }),
     );
 
     act(() => {
@@ -22,9 +29,57 @@ describe('useMessageFeedFilters', () => {
     expect(result.current.tagError).toMatch(/required to filter/i);
   });
 
+  it('validates whitespace-only username drafts on blur', () => {
+    const { result } = renderHook(() =>
+      useMessageFeedFilters({
+        activeAuthorUsername: null,
+        activeDateRange: null,
+        activeTag: null,
+      }),
+    );
+
+    act(() => {
+      result.current.handleUsernameChange('   ');
+    });
+    act(() => {
+      result.current.handleUsernameBlur();
+    });
+
+    expect(result.current.usernameError).toMatch(/required to filter/i);
+  });
+
+  it('validates whitespace-only username drafts on apply', () => {
+    const { result } = renderHook(() =>
+      useMessageFeedFilters({
+        activeAuthorUsername: null,
+        activeDateRange: null,
+        activeTag: null,
+      }),
+    );
+
+    act(() => {
+      result.current.setSelectedSectionId(
+        MESSAGE_FEED_FILTER_SECTION_IDS.authorUsername,
+      );
+      result.current.handleUsernameChange('   ');
+    });
+
+    let committed: ReturnType<typeof result.current.validateAllDrafts>;
+    act(() => {
+      committed = result.current.validateAllDrafts();
+    });
+
+    expect(committed!).toBeNull();
+    expect(result.current.usernameError).toMatch(/required to filter/i);
+  });
+
   it('commits a normalized tag and open-ended date range', () => {
     const { result } = renderHook(() =>
-      useMessageFeedFilters({ activeDateRange: null, activeTag: null }),
+      useMessageFeedFilters({
+        activeAuthorUsername: null,
+        activeDateRange: null,
+        activeTag: null,
+      }),
     );
 
     const start = dayjs('2026-05-01T10:00:00');
@@ -40,14 +95,41 @@ describe('useMessageFeedFilters', () => {
     });
 
     expect(committed!).toEqual({
+      authorUsername: null,
       categoryTag: 'general',
       dateRange: { createdFrom: start.toDate().toISOString() },
+    });
+  });
+
+  it('commits a trimmed username filter', () => {
+    const { result } = renderHook(() =>
+      useMessageFeedFilters({
+        activeAuthorUsername: null,
+        activeDateRange: null,
+        activeTag: null,
+      }),
+    );
+
+    act(() => {
+      result.current.handleUsernameChange('  alice  ');
+    });
+
+    let committed: ReturnType<typeof result.current.validateAllDrafts>;
+    act(() => {
+      committed = result.current.validateAllDrafts();
+    });
+
+    expect(committed!).toEqual({
+      authorUsername: 'alice',
+      categoryTag: null,
+      dateRange: null,
     });
   });
 
   it('clears filters when drafts are empty', () => {
     const { result } = renderHook(() =>
       useMessageFeedFilters({
+        activeAuthorUsername: 'alice',
         activeDateRange: { createdFrom: '2026-05-01T00:00:00.000Z' },
         activeTag: 'news',
       }),
@@ -64,6 +146,7 @@ describe('useMessageFeedFilters', () => {
     });
 
     expect(committed!).toEqual({
+      authorUsername: null,
       categoryTag: null,
       dateRange: null,
     });
@@ -71,7 +154,11 @@ describe('useMessageFeedFilters', () => {
 
   it('rejects an end date before the start date', () => {
     const { result } = renderHook(() =>
-      useMessageFeedFilters({ activeDateRange: null, activeTag: null }),
+      useMessageFeedFilters({
+        activeAuthorUsername: null,
+        activeDateRange: null,
+        activeTag: null,
+      }),
     );
 
     act(() => {
@@ -86,5 +173,17 @@ describe('useMessageFeedFilters', () => {
 
     expect(committed!).toBeNull();
     expect(result.current.endError).toMatch(/on or after start/i);
+  });
+
+  it('includes username in the active filter count', () => {
+    const { result } = renderHook(() =>
+      useMessageFeedFilters({
+        activeAuthorUsername: 'alice',
+        activeDateRange: null,
+        activeTag: null,
+      }),
+    );
+
+    expect(result.current.activeFilterCount).toBe(1);
   });
 });
