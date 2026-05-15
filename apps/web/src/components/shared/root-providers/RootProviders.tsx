@@ -1,5 +1,7 @@
 'use client';
 
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import type { ReactNode } from 'react';
 
 import { AppThemeProvider } from '@/components/shared/app-theme-provider';
@@ -12,7 +14,9 @@ export type RootProvidersProps = {
 export const RootProviders = ({ children }: RootProvidersProps) => {
   return (
     <AppThemeProvider>
-      <QueryClientProvider>{children}</QueryClientProvider>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <QueryClientProvider>{children}</QueryClientProvider>
+      </LocalizationProvider>
     </AppThemeProvider>
   );
 };

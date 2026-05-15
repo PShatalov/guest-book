@@ -29,7 +29,7 @@ describe('useMessagesInfiniteQuery', () => {
     mockApiFetchClient.mockReset();
   });
 
-  it('fetches the first page without a category tag filter', async () => {
+  it('fetches the first page without filters', async () => {
     mockApiFetchClient.mockResolvedValue({
       items: [
         {
@@ -44,9 +44,10 @@ describe('useMessagesInfiniteQuery', () => {
       nextCursor: null,
     });
 
-    const { result } = renderHook(() => useMessagesInfiniteQuery(null), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(
+      () => useMessagesInfiniteQuery({ categoryTag: null, dateRange: null }),
+      { wrapper: createWrapper() },
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -64,14 +65,97 @@ describe('useMessagesInfiniteQuery', () => {
       nextCursor: null,
     });
 
-    const { result } = renderHook(() => useMessagesInfiniteQuery('general'), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(
+      () =>
+        useMessagesInfiniteQuery({
+          categoryTag: 'general',
+          dateRange: null,
+        }),
+      { wrapper: createWrapper() },
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(mockApiFetchClient).toHaveBeenCalledWith(
       '/messages?limit=5&categoryTag=general',
+      expect.any(Object),
+    );
+  });
+
+  it('includes only createdFrom for an open-ended lower bound', async () => {
+    mockApiFetchClient.mockResolvedValue({
+      items: [],
+      hasMore: false,
+      nextCursor: null,
+    });
+
+    const { result } = renderHook(
+      () =>
+        useMessagesInfiniteQuery({
+          categoryTag: null,
+          dateRange: { createdFrom: '2026-05-01T00:00:00.000Z' },
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockApiFetchClient).toHaveBeenCalledWith(
+      '/messages?limit=5&createdFrom=2026-05-01T00%3A00%3A00.000Z',
+      expect.any(Object),
+    );
+  });
+
+  it('includes categoryTag and date bounds when both filters are active', async () => {
+    mockApiFetchClient.mockResolvedValue({
+      items: [],
+      hasMore: false,
+      nextCursor: null,
+    });
+
+    const { result } = renderHook(
+      () =>
+        useMessagesInfiniteQuery({
+          categoryTag: 'general',
+          dateRange: {
+            createdFrom: '2026-05-01T00:00:00.000Z',
+            createdTo: '2026-05-31T23:59:59.999Z',
+          },
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockApiFetchClient).toHaveBeenCalledWith(
+      '/messages?limit=5&categoryTag=general&createdFrom=2026-05-01T00%3A00%3A00.000Z&createdTo=2026-05-31T23%3A59%3A59.999Z',
+      expect.any(Object),
+    );
+  });
+
+  it('includes createdFrom and createdTo when date filtering', async () => {
+    mockApiFetchClient.mockResolvedValue({
+      items: [],
+      hasMore: false,
+      nextCursor: null,
+    });
+
+    const { result } = renderHook(
+      () =>
+        useMessagesInfiniteQuery({
+          categoryTag: null,
+          dateRange: {
+            createdFrom: '2026-05-01T00:00:00.000Z',
+            createdTo: '2026-05-31T23:59:59.999Z',
+          },
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockApiFetchClient).toHaveBeenCalledWith(
+      '/messages?limit=5&createdFrom=2026-05-01T00%3A00%3A00.000Z&createdTo=2026-05-31T23%3A59%3A59.999Z',
       expect.any(Object),
     );
   });
@@ -83,9 +167,10 @@ describe('useMessagesInfiniteQuery', () => {
       nextCursor: 'cursor-token',
     });
 
-    const { result } = renderHook(() => useMessagesInfiniteQuery(null), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(
+      () => useMessagesInfiniteQuery({ categoryTag: null, dateRange: null }),
+      { wrapper: createWrapper() },
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 

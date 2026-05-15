@@ -3,23 +3,30 @@
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import List from '@mui/material/List';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useMemo, useState } from 'react';
 
 import { useMessagesInfiniteQuery } from '@/components/shared/messages/useMessagesInfiniteQuery';
+import type { MessageDateRangeFilter } from '@/lib/messages/messageDateRange';
 
-import { MessageListItem } from '../MessageListItem';
-import { MessageTagFilter } from '../MessageTagFilter';
+import { MessageFeedFilters } from '../MessageFeedFilters';
+import { MessageFeedList } from './MessageFeedList/MessageFeedList';
 import { messageFeedPanelStyles } from './MessageFeedPanel.styles';
-
-const EMPTY_MESSAGE = 'No messages yet';
-const EMPTY_FILTERED_MESSAGE = 'No messages match this tag';
+import { getMessageFeedEmptyCopy } from './messageFeedEmptyCopy';
 
 export const MessageFeedPanel = () => {
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [activeDateRange, setActiveDateRange] =
+    useState<MessageDateRangeFilter | null>(null);
+  const [isErrorDismissed, setIsErrorDismissed] = useState(false);
+
+  const feedFilters = useMemo(
+    () => ({ categoryTag: activeTag, dateRange: activeDateRange }),
+    [activeTag, activeDateRange],
+  );
+
   const {
     data,
     fetchNextPage,
@@ -29,7 +36,7 @@ export const MessageFeedPanel = () => {
     isPending,
     isRefetching,
     refetch,
-  } = useMessagesInfiniteQuery(activeTag);
+  } = useMessagesInfiniteQuery(feedFilters);
 
   const items = useMemo(
     () => data?.pages.flatMap((page) => page.items) ?? [],
@@ -39,20 +46,32 @@ export const MessageFeedPanel = () => {
   const showInitialLoading = isPending;
   const showEmpty =
     !showInitialLoading && !isError && items.length === 0 && !isRefetching;
+  const emptyMessage = getMessageFeedEmptyCopy(activeTag, activeDateRange);
+  const showErrorAlert = isError && !isErrorDismissed;
+
+  const handleRetry = () => {
+    setIsErrorDismissed(false);
+    void refetch();
+  };
 
   return (
     <Stack spacing={2} sx={messageFeedPanelStyles.root}>
-      <MessageTagFilter
-        onApply={setActiveTag}
-        onClear={() => setActiveTag(null)}
+      <MessageFeedFilters
+        activeDateRange={activeDateRange}
+        activeTag={activeTag}
+        onFiltersChange={({ categoryTag, dateRange }) => {
+          setActiveTag(categoryTag);
+          setActiveDateRange(dateRange);
+        }}
       />
-      {isError ? (
+      {showErrorAlert ? (
         <Alert
           action={
-            <Button color="inherit" onClick={() => refetch()} size="small">
+            <Button color="inherit" onClick={handleRetry} size="small">
               Retry
             </Button>
           }
+          onClose={() => setIsErrorDismissed(true)}
           severity="error"
         >
           Could not load messages. Please try again.
@@ -90,18 +109,10 @@ export const MessageFeedPanel = () => {
                 data-testid="message-feed-empty"
                 variant="body1"
               >
-                {activeTag === null ? EMPTY_MESSAGE : EMPTY_FILTERED_MESSAGE}
+                {emptyMessage}
               </Typography>
             ) : null}
-            {items.length > 0 ? (
-              <Box sx={messageFeedPanelStyles.list}>
-                <List disablePadding>
-                  {items.map((message) => (
-                    <MessageListItem key={message.id} message={message} />
-                  ))}
-                </List>
-              </Box>
-            ) : null}
+            {items.length > 0 ? <MessageFeedList items={items} /> : null}
           </Box>
           {hasNextPage ? (
             <Button
