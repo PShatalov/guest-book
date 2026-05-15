@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { MessageFeedRefreshService } from './message-feed-refresh.service';
 import { MessagesRepository } from './messages.repository';
 
 export type MessageDto = {
@@ -13,7 +14,10 @@ const MAX_CATEGORY_TAG_LENGTH = 32;
 
 @Injectable()
 export class MessageCreationService {
-  constructor(private readonly messagesRepository: MessagesRepository) {}
+  constructor(
+    private readonly messagesRepository: MessagesRepository,
+    private readonly messageFeedRefreshService: MessageFeedRefreshService,
+  ) {}
 
   async create(
     author: { id: string; username: string },
@@ -42,6 +46,8 @@ export class MessageCreationService {
       text: input.text,
       categoryTag: normalizedTag,
     });
+
+    await this.messageFeedRefreshService.refresh();
 
     return {
       id: record.id,

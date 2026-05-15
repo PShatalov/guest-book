@@ -28,8 +28,23 @@ export class TestDatabaseCleaner {
           `TRUNCATE TABLE "${tableName}" RESTART IDENTITY CASCADE`,
         );
       }
+
+      await this.refreshMessageFeedIfPresent(pool);
     } finally {
       await pool.end();
     }
+  }
+
+  private async refreshMessageFeedIfPresent(pool: Pool): Promise<void> {
+    const exists = await pool.query<{ regclass: string | null }>(
+      `SELECT to_regclass($1) AS regclass`,
+      ['public.message_feed'],
+    );
+
+    if (!exists.rows[0]?.regclass) {
+      return;
+    }
+
+    await pool.query(`REFRESH MATERIALIZED VIEW "message_feed"`);
   }
 }
