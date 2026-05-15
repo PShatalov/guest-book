@@ -27,6 +27,8 @@ type ListMessagesInput = {
   limit?: number;
   cursor?: string;
   categoryTag?: string;
+  createdFrom?: string;
+  createdTo?: string;
 };
 
 @Injectable()
@@ -48,11 +50,30 @@ export class MessageListingService {
 
     const categoryTag = this.normalizeCategoryTagFilter(input.categoryTag);
     const cursor = this.decodeCursor(input.cursor);
+    const createdFrom = this.parseCreatedBound(
+      input.createdFrom,
+      'createdFrom',
+    );
+    const createdTo = this.parseCreatedBound(input.createdTo, 'createdTo');
+
+    if (
+      createdFrom !== undefined &&
+      createdTo !== undefined &&
+      createdFrom.getTime() > createdTo.getTime()
+    ) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: ['createdFrom must not be after createdTo'],
+        error: 'Bad Request',
+      });
+    }
 
     const page = await this.messageFeedReadRepository.findPage({
       limit,
       cursor,
       categoryTag,
+      createdFrom,
+      createdTo,
     });
 
     const items = page.rows.map((row) => this.toMessageDto(row));
@@ -66,6 +87,34 @@ export class MessageListingService {
       hasMore: page.hasMore,
       nextCursor,
     };
+  }
+
+  private parseCreatedBound(
+    value: string | undefined,
+    field: 'createdFrom' | 'createdTo',
+  ): Date | undefined {
+    if (value === undefined) {
+      return undefined;
+    }
+
+    if (value.trim().length === 0) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: [`${field} must be a valid ISO-8601 date-time`],
+        error: 'Bad Request',
+      });
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: [`${field} must be a valid ISO-8601 date-time`],
+        error: 'Bad Request',
+      });
+    }
+
+    return parsed;
   }
 
   private normalizeCategoryTagFilter(

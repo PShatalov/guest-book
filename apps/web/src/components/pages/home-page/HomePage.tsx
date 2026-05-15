@@ -19,7 +19,10 @@ export const HomePage = () => {
           Share a short message with a category tag for others.
         </Typography>
         <Box data-testid="home-page-layout" sx={homePageStyles.layout}>
-          <Box data-testid="home-page-compose" sx={homePageStyles.composeColumn}>
+          <Box
+            data-testid="home-page-compose"
+            sx={homePageStyles.composeColumn}
+          >
             <CreateMessagePanel />
           </Box>
           <Box data-testid="home-page-feed" sx={homePageStyles.feedColumn}>

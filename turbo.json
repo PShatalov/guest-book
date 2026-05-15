@@ -17,6 +17,9 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
+    "typecheck": {
+      "outputs": []
+    },
     "test:e2e": {
       "cache": false,
       "dependsOn": []

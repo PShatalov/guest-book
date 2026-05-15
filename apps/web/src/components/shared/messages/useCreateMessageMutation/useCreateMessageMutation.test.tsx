@@ -37,7 +37,10 @@ describe('useCreateMessageMutation', () => {
     });
 
     const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
     const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 

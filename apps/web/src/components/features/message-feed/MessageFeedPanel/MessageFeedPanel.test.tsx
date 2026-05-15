@@ -124,9 +124,7 @@ describe('MessageFeedPanel', () => {
   it('shows an error alert with retry when the query fails', () => {
     mockQueryState = { ...mockQueryState, isError: true, data: undefined };
     renderMessageFeedPanel();
-    expect(
-      screen.getByText(/could not load messages/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/could not load messages/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /retry/i }));
     expect(mockRefetch).toHaveBeenCalled();
   });

@@ -2,6 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsInt,
+  IsISO8601,
   IsOptional,
   IsString,
   Max,
@@ -12,6 +13,7 @@ import {
 
 export class ListMessagesQueryDto {
   @ApiPropertyOptional({
+    type: 'integer',
     description: 'Maximum number of messages per page',
     default: 20,
     minimum: 1,
@@ -46,4 +48,24 @@ export class ListMessagesQueryDto {
   @MinLength(1, { message: 'categoryTag must not be empty' })
   @MaxLength(32)
   categoryTag?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Inclusive lower bound on message createdAt (ISO-8601 date-time, UTC)',
+    format: 'date-time',
+    example: '2026-05-15T00:00:00.000Z',
+  })
+  @IsOptional()
+  @IsISO8601({ strict: true })
+  createdFrom?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Inclusive upper bound on message createdAt (ISO-8601 date-time, UTC)',
+    format: 'date-time',
+    example: '2026-05-15T23:59:59.999Z',
+  })
+  @IsOptional()
+  @IsISO8601({ strict: true })
+  createdTo?: string;
 }

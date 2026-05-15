@@ -1,0 +1,2 @@
+pnpm exec lint-staged
+./node_modules/.bin/turbo run typecheck lint

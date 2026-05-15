@@ -14,10 +14,12 @@ export type MessageTagFilterProps = {
   onClear: () => void;
 };
 
-const normalizeTag = (value: string): string =>
-  value.trim().toLowerCase();
+const normalizeTag = (value: string): string => value.trim().toLowerCase();
 
-export const MessageTagFilter = ({ onApply, onClear }: MessageTagFilterProps) => {
+export const MessageTagFilter = ({
+  onApply,
+  onClear,
+}: MessageTagFilterProps) => {
   const [input, setInput] = useState('');
   const [fieldError, setFieldError] = useState<string | null>(null);
 
@@ -62,7 +64,11 @@ export const MessageTagFilter = ({ onApply, onClear }: MessageTagFilterProps) =>
         value={input}
       />
       <Stack direction="row" spacing={1} sx={messageTagFilterStyles.actions}>
-        <Button data-testid="message-tag-filter-apply" type="submit" variant="contained">
+        <Button
+          data-testid="message-tag-filter-apply"
+          type="submit"
+          variant="contained"
+        >
           Apply
         </Button>
         <Button
