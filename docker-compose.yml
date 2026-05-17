@@ -36,6 +36,11 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       SESSION_SECRET: ${SESSION_SECRET}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      OTEL_SERVICE_NAME: guest-book-api
+      OTEL_SDK_DISABLED: ${OTEL_SDK_DISABLED:-false}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://host.docker.internal:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
+      OTEL_TRACES_SAMPLER: ${OTEL_TRACES_SAMPLER:-parentbased_always_on}
     depends_on:
       postgres:
         condition: service_healthy

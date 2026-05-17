@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './auth/auth.module';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { createPinoLoggerParams } from './common/logging/pino-logger.config';
 import { ThrottlerBehindProxyGuard } from './common/security/throttler-behind-proxy.guard';
 import configuration, { type AppConfig } from './config/configuration';
 import { DrizzleModule } from './database/drizzle.module';
@@ -16,6 +19,12 @@ import { UsersModule } from './users/users.module';
       isGlobal: true,
       envFilePath: ['.env.local', '.env.development', '.env'],
       load: [configuration],
+    }),
+    LoggerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService<AppConfig, true>) =>
+        createPinoLoggerParams(configService),
     }),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
@@ -40,6 +49,10 @@ import { UsersModule } from './users/users.module';
     UsersModule,
   ],
   providers: [
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    },
     {
       provide: APP_GUARD,
       useClass: ThrottlerBehindProxyGuard,
