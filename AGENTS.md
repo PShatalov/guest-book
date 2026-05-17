@@ -4,4 +4,6 @@ Guest Book is a TypeScript full-stack pnpm/Turborepo monorepo. It contains a Nes
 
 - Use `pnpm@9.15.9`; `pnpm-lock.yaml` is authoritative.
 - Common root commands: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`.
+- When doing feature development or bug fixes, use the `/tdd` skill if it is available and the task benefits from a red-green-refactor workflow.
+- When installing, updating, or removing dependencies, use the `/dependency-installer` skill if it is available.
 - Keep package- or domain-specific guidance in the nearest relevant `AGENTS.md` instead of expanding this root file.
