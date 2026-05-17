@@ -9,10 +9,26 @@ dc_resource(
     links=['localhost:5432'],
 )
 
+local_resource(
+    'migrations',
+    cmd='set -a; [ -f .env ] && . ./.env; set +a; DATABASE_URL="postgresql://${POSTGRES_USER:-guestbook}:${POSTGRES_PASSWORD:-guestbook}@localhost:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-guestbook}" pnpm --filter @guest-book/api run db:migrate',
+    deps=[
+        'apps/api/drizzle',
+        'apps/api/drizzle.config.ts',
+        'apps/api/src/database/schema',
+        'apps/api/package.json',
+        'package.json',
+        'pnpm-lock.yaml',
+        'pnpm-workspace.yaml',
+    ],
+    resource_deps=['postgres'],
+    labels=['database'],
+)
+
 dc_resource(
     'api',
     labels=['backend'],
-    resource_deps=['postgres'],
+    resource_deps=['postgres', 'migrations'],
     links=['http://localhost:3001'],
 )
 

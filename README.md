@@ -38,7 +38,6 @@ Tilt starts PostgreSQL and the API through Docker Compose, then starts the Next.
 
 ```bash
 pnpm setup:env
-pnpm --filter @guest-book/api run db:migrate
 tilt up
 ```
 
