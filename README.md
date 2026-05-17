@@ -38,6 +38,7 @@ Tilt starts PostgreSQL and the API through Docker Compose, then starts the Next.
 
 ```bash
 pnpm setup:env
+pnpm --filter @guest-book/api run db:migrate
 tilt up
 ```
 
@@ -112,6 +113,7 @@ Useful Turbo options:
 pnpm turbo run build --filter=@guest-book/api
 pnpm turbo run test --filter=@guest-book/web
 pnpm turbo run lint --force
+pnpm --filter @guest-book/api run db:migrate
 ```
 
 ## Answers To Questions
