@@ -5,8 +5,10 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
+    "predev": "pnpm run db:migrate",
     "dev": "nest start --watch",
     "start": "nest start",
+    "prestart:dev": "pnpm run db:migrate",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main.js",
     "lint": "eslint .",
@@ -16,7 +18,6 @@
     "test:e2e:http": "jest test/health.e2e-spec.ts",
     "test:db:setup": "ts-node test/support/run-db-setup.ts",
     "test:db:teardown": "ts-node test/support/run-db-teardown.ts",
-    "test:auth": "pnpm run test:e2e:db",
     "test:watch": "jest --watch",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

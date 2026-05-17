@@ -1,4 +1,4 @@
-# Ephemeral PostgreSQL for E2E and API database tests (port 5433 by default).
+# PostgreSQL for E2E and API database tests (port 5433 by default).
 # Data lives on tmpfs — removed when the container stops.
 services:
   postgres-test:

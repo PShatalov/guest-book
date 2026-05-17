@@ -7,12 +7,11 @@
     "pnpm": "9.15.9"
   },
   "scripts": {
+    "setup:env": "bash scripts/setup-env.sh",
     "dev": "turbo run dev",
     "build": "turbo run build",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
-    "test:e2e:db": "pnpm --filter @guest-book/api test:e2e:db",
-    "db:studio": "pnpm --filter @guest-book/api db:studio",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json,md}\"",

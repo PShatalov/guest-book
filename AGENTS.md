@@ -1,15 +1,7 @@
 # AGENTS.md
 
-## Application Overview
+Guest Book is a TypeScript full-stack pnpm/Turborepo monorepo. It contains a NestJS REST API, a Next.js App Router web app, shared lint/type configuration packages, and a Playwright E2E package. The application lets guests register, sign in, create messages, edit or delete their own messages, and browse the message feed with filters.
 
-This repository contains a Guestbook Application designed to allow users to view, post, edit, and interact with messages
-
-### Technical stack
-
-Nest.js, Next.js, Typescript, Postgress, Jest, Playwright
-
-### Core Features
-
-- **Message Feed:** A public timeline where users can read messages left by guests.
-- **User Interactions:** Message authors can create, inline-edit, or delete their own entries. Both authenticated and unauthenticated users can view and filter messages.
-- **Filtering:** We support username, tagsm date and time filtering.
+- Use `pnpm@9.15.9`; `pnpm-lock.yaml` is authoritative.
+- Common root commands: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`.
+- Keep package- or domain-specific guidance in the nearest relevant `AGENTS.md` instead of expanding this root file.

@@ -1,199 +1,143 @@
 # Guest Book
 
-Monorepo for the guestbook application (message feed, auth, filtering). Orchestrated with [Turborepo](https://turbo.build) and [pnpm](https://pnpm.io) workspaces.
+Full-stack TypeScript guest book app with a NestJS API, Next.js web app, Playwright E2E tests, pnpm workspaces, and Turborepo.
 
-## Workspace layout
+## Required Tools
 
-| Path                         | Purpose                   |
-| ---------------------------- | ------------------------- |
-| `apps/web`                   | Next.js frontend          |
-| `apps/api`                   | NestJS API                |
-| `apps/e2e`                   | Playwright E2E tests      |
-| `packages/typescript-config` | Shared TypeScript presets |
-| `packages/eslint-config`     | Shared ESLint flat config |
+- Node.js `24.15.0` (`.nvmrc`)
+- pnpm `9.15.9`
+- Docker Engine with Compose v2
+- [Tilt CLI](https://docs.tilt.dev/install.html)
 
-## Prerequisites
-
-- Node.js **24.15.0** LTS ([`.nvmrc`](.nvmrc) — use `nvm install`, `fnm use`, or [nodejs.org](https://nodejs.org/))
-- [pnpm](https://pnpm.io/installation) 9.15.9 (see `packageManager` in root `package.json`; `engine-strict` is enabled in [`.npmrc`](.npmrc))
-
-## Commands
-
-Run from the repository root:
+Install dependencies from the repository root:
 
 ```bash
 pnpm install
-pnpm dev      # turbo run dev (persistent dev stubs)
-pnpm build    # turbo run build
-pnpm test     # turbo run test
-pnpm test:e2e # Playwright E2E (Chromium, Firefox, WebKit)
-pnpm lint     # turbo run lint
-pnpm format   # prettier write
 ```
 
-Filter to a single workspace:
+## Setup `.env` Files
+
+Create local env files from the committed examples:
 
 ```bash
-pnpm --filter @guest-book/api build
-pnpm --filter @guest-book/web test
+pnpm setup:env
 ```
 
-### API (NestJS)
+The script creates these files if they do not already exist:
+
+- `.env` from `compose.env.example`
+- `apps/api/.env` from `apps/api/.env.example`
+- `apps/web/.env.local` from `apps/web/.env.example`
+- `apps/e2e/.env` from `apps/e2e/.env.example`
+
+The examples use local-only defaults so the app can start immediately after copying. Change secrets and credentials before using them outside local development.
+
+## Start App Locally Using Tilt
+
+Tilt starts PostgreSQL and the API through Docker Compose, then starts the Next.js app on the host.
 
 ```bash
-cp apps/api/.env.example apps/api/.env
-# Set SESSION_SECRET and ensure DATABASE_URL points at Postgres, then:
-pnpm --filter @guest-book/api db:migrate
-pnpm --filter @guest-book/api start:dev
+pnpm setup:env
+tilt up
+```
+
+Open the Tilt dashboard at [http://localhost:10350](http://localhost:10350). The web app runs at [http://localhost:3000](http://localhost:3000), and the API runs at [http://localhost:3001](http://localhost:3001).
+
+Swagger API docs are available at [http://localhost:3001/api/docs](http://localhost:3001/api/docs) after the API starts.
+
+Useful checks:
+
+```bash
 curl http://localhost:3001/health
 curl http://localhost:3001/api/docs
 ```
 
-Auth endpoints: `POST /auth/register`, `POST /auth/login`, `GET /auth/session`, `POST /auth/logout` (cookie session). Run auth API e2e against an isolated Docker test database (port **5433**, database `guestbook_test` — does not use dev Postgres on 5432):
-
-```bash
-pnpm --filter @guest-book/api test:e2e:db
-```
-
-Requires [Docker Engine](https://docs.docker.com/engine/) with Compose v2. The test stack is defined in `docker-compose.test.yml` and torn down automatically after the run.
-
-### Docker Compose (API + PostgreSQL)
-
-Runs the NestJS API and PostgreSQL with credentials supplied only via environment variables.
-
-**Prerequisites:** [Docker Engine](https://docs.docker.com/engine/) with Compose v2.
-
-```bash
-cp compose.env.example .env
-# Edit .env and set POSTGRES_PASSWORD (and other values if needed)
-
-docker compose up --build
-curl http://localhost:3001/health
-```
-
-A healthy stack returns JSON with `"status":"ok"` and `"database":"up"`. Stop with `docker compose down` (add `-v` to remove the Postgres volume).
-
-| Variable            | Purpose                                       |
-| ------------------- | --------------------------------------------- |
-| `POSTGRES_USER`     | PostgreSQL role                               |
-| `POSTGRES_PASSWORD` | PostgreSQL password                           |
-| `POSTGRES_DB`       | Database name                                 |
-| `POSTGRES_PORT`     | Host port mapped to Postgres (default `5432`) |
-| `API_PORT`          | Host port mapped to the API (default `3001`)  |
-
-The API container receives `DATABASE_URL` built from those values and connects to the `postgres` service hostname on the Compose network.
-
-### Tilt (local development)
-
-Runs the Compose stack (PostgreSQL + API) and the Next.js dev server from a single command with the [Tilt](https://tilt.dev/) dashboard.
-
-**Prerequisites:** [Tilt CLI](https://docs.tilt.dev/install.html), [Docker Engine](https://docs.docker.com/engine/) with Compose v2, Node.js 24.15.0 LTS (see [`.nvmrc`](.nvmrc)), pnpm 9.15.9, and `pnpm install` at the repository root.
-
-```bash
-cp compose.env.example .env
-# Edit .env: set POSTGRES_PASSWORD and SESSION_SECRET (required for API auth)
-
-pnpm dev:free-ports   # if 3000/3001 are still in use from a prior dev or E2E run
-tilt up
-```
-
-Open the Tilt UI at [http://localhost:10350](http://localhost:10350). When `postgres` and `api` are green:
-
-```bash
-curl http://localhost:3001/health
-```
-
-A healthy stack returns JSON with `"status":"ok"` and `"database":"up"`. The web app is available at [http://localhost:3000](http://localhost:3000).
-
-Stop everything with:
+Stop the local stack with:
 
 ```bash
 tilt down
 ```
 
-If a resource stays unhealthy, inspect logs with `tilt logs <resource>` or `docker compose logs <service>` (for example `docker compose logs api`).
+## Run Tests In All Apps
 
-If the `web` resource fails with `EADDRINUSE` on port 3000, a previous Next.js or E2E process is still running. Run `pnpm dev:free-ports`, then `tilt up` again.
-
-If you see `SESSION_SECRET variable is not set`, add `SESSION_SECRET` to the root `.env` (see `compose.env.example`).
-
-If the `web` resource reloads in a loop, ensure `.tiltignore` is present and that Tilt is not watching `apps/web/.next` (build output). Restart with `tilt down` then `tilt up` after pulling changes to the `Tiltfile`.
-
-Environment variables are the same as [Docker Compose (API + PostgreSQL)](#docker-compose-api--postgresql); Tilt reads the root `.env` file used by Compose.
-
-### Web (Next.js)
+Run unit tests for all workspaces:
 
 ```bash
-pnpm --filter @guest-book/web dev
-# http://localhost:3000
+pnpm test
 ```
 
-Copy `apps/web/.env.example` to `apps/web/.env.local` and set `NEXT_PUBLIC_API_URL` (default `http://localhost:3001`). The API must expose `CORS_ORIGIN=http://localhost:3000` and `SESSION_SECRET` for cookie auth. Routes: `/register`, `/login`; the nav shows your username when signed in.
-
-### E2E (Playwright)
-
-Browser tests live in **`apps/e2e`** (`pnpm test:e2e`). Story suites (e.g. KAN-7 auth) are under `apps/e2e/tests/kan-7-sign-up-sign-in/`. Agent RECON/generation scratch stays in `.playwright-output/` (gitignored).
-
-**Prerequisites:** [Docker Engine](https://docs.docker.com/engine/) with Compose v2 (for the optional isolated test Postgres used by Playwright global setup and API database E2E).
-
-Install dependencies (the `apps/e2e` workspace runs `postinstall` to download Chromium, Firefox, and WebKit into the repo’s local Playwright cache):
+Run browser E2E tests:
 
 ```bash
-pnpm install
-# Or manually:
-pnpm --filter @guest-book/e2e run install:browsers
+pnpm test:e2e
 ```
 
-Run all E2E specs from the repository root (starts dedicated API/web processes via Playwright `webServer`; global setup always starts `docker-compose.test.yml` on port **5433** and tears it down afterward):
+Run API database-backed E2E tests:
 
 ```bash
-pnpm run test:e2e
+pnpm test:e2e:api
 ```
 
-The test database is separate from the dev stack (`docker-compose.yml` on port 5432). E2E ignores a shell `DATABASE_URL` pointing at dev Postgres and does not reuse Tilt/Docker servers on 3000/3001 unless you set `E2E_REUSE_SERVERS=true`. Data lives on container tmpfs and is removed when the test Postgres container stops.
-
-Equivalent to `npm run test:e2e` when using npm at the root. If tests fail with a missing-browser error, re-run `pnpm --filter @guest-book/e2e run install:browsers` (browsers are stored under `playwright-core/.local-browsers` via `PLAYWRIGHT_BROWSERS_PATH=0`).
-
-**API database E2E (Jest + Supertest):**
+Package-specific tests can be run with pnpm filters:
 
 ```bash
-pnpm --filter @guest-book/api test:e2e:db
+pnpm --filter @guest-book/api test
+pnpm --filter @guest-book/web test
+pnpm --filter @guest-book/e2e test:e2e
 ```
 
-**Harness smoke test** (optional, verifies the Docker lifecycle utilities):
+## Use Turborepo
+
+Root scripts delegate to Turbo:
 
 ```bash
-RUN_TEST_DB_INTEGRATION=1 pnpm --filter @guest-book/api test:e2e:db
+pnpm dev
+pnpm build
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm test:e2e
 ```
 
-## Continuous integration (GitHub Actions)
+Turbo task definitions live in `turbo.json`. Use filters when you only want one workspace:
 
-CI runs automatically on **pull requests** and on **pushes to `main`**. Workflows live under [`.github/workflows/`](.github/workflows/).
+```bash
+pnpm --filter @guest-book/api build
+pnpm --filter @guest-book/web lint
+```
 
-### Verify (PR and `main`)
+Useful Turbo options:
 
-The [CI workflow](.github/workflows/ci.yml) runs on `ubuntu-latest` with Node.js from [`.nvmrc`](.nvmrc) and pnpm 9.15.9:
+```bash
+pnpm turbo run build --filter=@guest-book/api
+pnpm turbo run test --filter=@guest-book/web
+pnpm turbo run lint --force
+```
 
-1. `pnpm install --frozen-lockfile`
-2. `pnpm build` (TypeScript checks for API via `nest build` and web via `next build`)
-3. `pnpm lint`
-4. `pnpm test` (unit tests in `apps/api` and `apps/web` only — no Playwright or `*.e2e-spec.ts` suites)
-5. `pnpm format:check`
+## Answers To Questions
 
-No Docker, Tilt, PostgreSQL, or running dev servers is required for this job. Browser and API e2e run via the manual [E2E workflow](#e2e-manual) when you need a live stack. Open the **Actions** tab on GitHub to see logs for a failed step.
+### 1. How would you scale?
 
-**Common fixes:**
+The API and web app should be horizontally scaled behind a load balancer because the application services are stateless. Session data is already stored outside the app process, so adding more API instances should not require sticky in-memory state.
 
-- Lockfile out of date — run `pnpm install` locally and commit `pnpm-lock.yaml`.
-- Formatting — run `pnpm format` and commit the diff.
-- Lint or test failures — reproduce locally with the same command shown in the failed step.
+For the database, I would start with the simplest reliable path: tune indexes, add read replicas for read-heavy traffic, and use materialized views for expensive feed or aggregate queries if the query patterns justify it. If materialized views are not enough, I would move to CQRS: keep the write database, maintain separate read databases optimized for feed queries, and synchronize them through a message queue.
 
-### E2E (manual) {#e2e-manual}
+### 2. How would you ensure minimal response time at scale?
 
-The [E2E workflow](.github/workflows/e2e.yml) runs only when triggered manually (**Actions → E2E → Run workflow**). It starts the test Postgres stack (`docker-compose.test.yml`), applies migrations, installs Chromium, runs the Playwright smoke spec against the Next.js dev server, tears down the test database (even on failure), and uploads the HTML report as an artifact if the job fails.
+For the current message feed, the backend supports filtering by `categoryTag`, `authorUsername`, `createdFrom`, `createdTo`, and cursor-based pagination. Because the query reads from the `message_feed` materialized view and sorts by newest messages first, I would add indexes on that view for the default feed order, category filtering, and case-insensitive author username filtering. If production metrics show users frequently combine category and author filters, I would add a combined index for that path later, but not before it is justified because every extra materialized view index increases refresh cost.
 
-Locally, all three browsers still run via `pnpm test:e2e`; CI uses Chromium only to keep dispatch runs fast.
+If we remove the materialized view at some point and read directly from base tables, the same access patterns should be covered on the underlying tables instead. The `messages` table would need indexes for newest-first pagination, category plus newest-first pagination, and author plus newest-first pagination.
 
-## Turborepo
+At the infrastructure level, I would use CDN caching for static Next.js assets and keep API instances close to the database. Slow query logs and traces will help with future optimizations.
 
-Pipeline definitions live in `turbo.json`. Local caching is enabled by default. Build outputs are declared for `dist/**` and `.next/**` when apps produce them.
+### 3. How would you ensure fault tolerance?
+
+The current app already has a `/health` endpoint and stores persistent state in PostgreSQL. In production, I would run multiple web and API instances across availability zones and make sure database migrations are backward-compatible with the currently deployed version.
+
+For PostgreSQL, I would use automated backups, point-in-time recovery and monitoring. If we introduce asynchronous workflows later, message queue consumers should be idempotent so retries do not duplicate messages or corrupt state.
+
+### 4. How would you monitor performance and errors in production?
+
+The API already uses structured Pino logging and OpenTelemetry dependencies, so I would export logs, metrics, and traces to a production observability platform. We should track request rate, error rate, latency percentiles, database query duration, connection pool saturation, failed sign-ins, message creation failures, and health check status.
+
+For the frontend, I would collect web vitals and client-side errors. We can install a tool like Bugsnag, Sentry, or a similar service to catch browser errors.
