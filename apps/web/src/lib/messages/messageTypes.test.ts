@@ -11,6 +11,7 @@ describe('messageTypes', () => {
             categoryTag: 'general',
             authorUsername: 'alice',
             createdAt: '2026-05-15T12:00:00.000Z',
+            isBookmarked: false,
           },
         ],
         hasMore: false,
@@ -37,7 +38,20 @@ describe('messageTypes', () => {
         categoryTag: 'general',
         authorUsername: 'alice',
         createdAt: '2026-05-15T12:00:00.000Z',
+        isBookmarked: true,
       }),
     ).toBe(true);
+  });
+
+  it('rejects a message without bookmark state', () => {
+    expect(
+      isMessage({
+        id: '1',
+        text: 'Hello',
+        categoryTag: 'general',
+        authorUsername: 'alice',
+        createdAt: '2026-05-15T12:00:00.000Z',
+      }),
+    ).toBe(false);
   });
 });

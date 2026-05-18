@@ -2,6 +2,7 @@
 
 import type { Dayjs } from 'dayjs';
 
+import { MessageBookmarkedFilterFields } from '../../MessageBookmarkedFilterFields';
 import { MessageDateTimeFilterFields } from '../../MessageDateTimeFilterFields';
 import { MessageTagFilterFields } from '../../MessageTagFilterFields';
 import { MessageUsernameFilterFields } from '../../MessageUsernameFilterFields';
@@ -9,10 +10,13 @@ import { MESSAGE_FEED_FILTER_SECTION_IDS } from '../messageFeedFilterDraft';
 import type { MessageFeedFilterSectionId } from '../messageFeedFilterDraft';
 
 export type MessageFeedFilterSectionContentProps = {
+  bookmarkedOnlyInput: boolean;
   end: Dayjs | null;
   endError: string | null;
   generalError: string | null;
   hasDateValidationError: boolean;
+  isSignedIn: boolean;
+  onBookmarkedOnlyChange: (value: boolean) => void;
   onDismissDateErrors: () => void;
   onEndBlur: () => void;
   onEndChange: (value: Dayjs | null) => void;
@@ -31,10 +35,13 @@ export type MessageFeedFilterSectionContentProps = {
 };
 
 export const MessageFeedFilterSectionContent = ({
+  bookmarkedOnlyInput,
   end,
   endError,
   generalError,
   hasDateValidationError,
+  isSignedIn,
+  onBookmarkedOnlyChange,
   onDismissDateErrors,
   onEndBlur,
   onEndChange,
@@ -67,6 +74,15 @@ export const MessageFeedFilterSectionContent = ({
         onBlur={onUsernameBlur}
         onChange={onUsernameChange}
         value={usernameInput}
+      />
+    );
+  }
+  if (selectedSectionId === MESSAGE_FEED_FILTER_SECTION_IDS.bookmarks) {
+    return (
+      <MessageBookmarkedFilterFields
+        isSignedIn={isSignedIn}
+        onChange={onBookmarkedOnlyChange}
+        value={bookmarkedOnlyInput}
       />
     );
   }

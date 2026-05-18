@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { AuthenticatedSessionGuard } from '../common/guards/authenticated-session.guard';
+import { MessageBookmarkingService } from './message-bookmarking.service';
+import { MessageBookmarksRepository } from './message-bookmarks.repository';
 import { MessageCreationService } from './message-creation.service';
 import { MessageDeletionService } from './message-deletion.service';
 import { MessageFeedReadRepository } from './message-feed-read.repository';
@@ -16,8 +18,10 @@ import { MessagesRepository } from './messages.repository';
   controllers: [MessagesController],
   providers: [
     MessagesRepository,
+    MessageBookmarksRepository,
     MessageFeedReadRepository,
     MessageFeedRefreshService,
+    MessageBookmarkingService,
     MessageCreationService,
     MessageUpdateService,
     MessageDeletionService,

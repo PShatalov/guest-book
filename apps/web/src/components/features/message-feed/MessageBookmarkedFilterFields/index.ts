@@ -1,0 +1,1 @@
+export { MessageBookmarkedFilterFields } from './MessageBookmarkedFilterFields';

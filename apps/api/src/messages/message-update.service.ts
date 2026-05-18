@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { MessageBookmarksRepository } from './message-bookmarks.repository';
 import type { MessageDto } from './message-creation.service';
 import { MessageFeedRefreshService } from './message-feed-refresh.service';
 import { MessagesRepository } from './messages.repository';
@@ -14,6 +15,7 @@ const MAX_CATEGORY_TAG_LENGTH = 32;
 export class MessageUpdateService {
   constructor(
     private readonly messagesRepository: MessagesRepository,
+    private readonly messageBookmarksRepository: MessageBookmarksRepository,
     private readonly messageFeedRefreshService: MessageFeedRefreshService,
   ) {}
 
@@ -54,6 +56,10 @@ export class MessageUpdateService {
       text: input.text,
       categoryTag: normalizedTag,
     });
+    const isBookmarked = await this.messageBookmarksRepository.isBookmarked({
+      userId: author.id,
+      messageId,
+    });
 
     await this.messageFeedRefreshService.refresh();
 
@@ -63,6 +69,7 @@ export class MessageUpdateService {
       categoryTag: record.categoryTag,
       authorUsername: author.username,
       createdAt: record.createdAt.toISOString(),
+      isBookmarked,
     };
   }
 }

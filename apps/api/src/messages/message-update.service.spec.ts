@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { MessageBookmarksRepository } from './message-bookmarks.repository';
 import { MessageFeedRefreshService } from './message-feed-refresh.service';
 import { MessageUpdateService } from './message-update.service';
 import { MessagesRepository } from './messages.repository';
@@ -14,6 +15,7 @@ describe('MessageUpdateService', () => {
     findById: jest.Mock;
     update: jest.Mock;
   };
+  let bookmarksRepository: { isBookmarked: jest.Mock };
   let feedRefresh: { refresh: jest.Mock };
 
   const createdAt = new Date('2026-05-15T12:00:00.000Z');
@@ -38,11 +40,15 @@ describe('MessageUpdateService', () => {
     feedRefresh = {
       refresh: jest.fn().mockResolvedValue(undefined),
     };
+    bookmarksRepository = {
+      isBookmarked: jest.fn().mockResolvedValue(false),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MessageUpdateService,
         { provide: MessagesRepository, useValue: repository },
+        { provide: MessageBookmarksRepository, useValue: bookmarksRepository },
         { provide: MessageFeedRefreshService, useValue: feedRefresh },
       ],
     }).compile();
@@ -62,13 +68,32 @@ describe('MessageUpdateService', () => {
       categoryTag: 'news',
       authorUsername: 'alice',
       createdAt: createdAt.toISOString(),
+      isBookmarked: false,
     });
 
     expect(repository.update).toHaveBeenCalledWith('message-id', {
       text: 'Updated text',
       categoryTag: 'news',
     });
+    expect(bookmarksRepository.isBookmarked).toHaveBeenCalledWith({
+      userId: 'user-id',
+      messageId: 'message-id',
+    });
     expect(feedRefresh.refresh).toHaveBeenCalled();
+  });
+
+  it('preserves the author bookmark state in the update response', async () => {
+    bookmarksRepository.isBookmarked.mockResolvedValue(true);
+
+    await expect(
+      service.update({ id: 'user-id', username: 'alice' }, 'message-id', {
+        text: 'Updated text',
+        categoryTag: 'news',
+      }),
+    ).resolves.toMatchObject({
+      id: 'message-id',
+      isBookmarked: true,
+    });
   });
 
   it('returns not found when the message does not exist', async () => {

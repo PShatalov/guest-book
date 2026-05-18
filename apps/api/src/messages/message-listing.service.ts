@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { MessageDto } from './message-creation.service';
 import {
   MessageFeedReadRepository,
@@ -31,7 +35,13 @@ type ListMessagesInput = {
   authorUsername?: string;
   createdFrom?: string;
   createdTo?: string;
+  bookmarkedOnly?: boolean;
 };
+
+type CurrentViewer = {
+  id: string;
+  username: string;
+} | null;
 
 @Injectable()
 export class MessageListingService {
@@ -39,8 +49,15 @@ export class MessageListingService {
     private readonly messageFeedReadRepository: MessageFeedReadRepository,
   ) {}
 
-  async list(input: ListMessagesInput): Promise<PaginatedMessagesDto> {
+  async list(
+    input: ListMessagesInput,
+    viewer: CurrentViewer = null,
+  ): Promise<PaginatedMessagesDto> {
     const limit = input.limit ?? DEFAULT_LIMIT;
+
+    if (input.bookmarkedOnly === true && viewer === null) {
+      throw new UnauthorizedException('Not authenticated');
+    }
 
     if (!Number.isInteger(limit) || limit < MIN_LIMIT || limit > MAX_LIMIT) {
       throw new BadRequestException({
@@ -80,6 +97,8 @@ export class MessageListingService {
       authorUsername,
       createdFrom,
       createdTo,
+      viewerId: viewer?.id,
+      bookmarkedOnly: input.bookmarkedOnly === true,
     });
 
     const items = page.rows.map((row) => this.toMessageDto(row));
@@ -253,6 +272,7 @@ export class MessageListingService {
       categoryTag: row.categoryTag,
       authorUsername: row.authorUsername,
       createdAt: row.createdAt.toISOString(),
+      isBookmarked: row.isBookmarked,
     };
   }
 }

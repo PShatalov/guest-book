@@ -20,12 +20,14 @@ export {
 
 type UseMessageFeedFiltersParams = {
   activeAuthorUsername: string | null;
+  activeBookmarkedOnly: boolean;
   activeDateRange: MessageDateRangeFilter | null;
   activeTag: string | null;
 };
 
 export const useMessageFeedFilters = ({
   activeAuthorUsername,
+  activeBookmarkedOnly,
   activeDateRange,
   activeTag,
 }: UseMessageFeedFiltersParams) => {
@@ -35,6 +37,7 @@ export const useMessageFeedFilters = ({
     );
   const [tagInput, setTagInput] = useState('');
   const [tagError, setTagError] = useState<string | null>(null);
+  const [bookmarkedOnlyInput, setBookmarkedOnlyInput] = useState(false);
 
   const usernameDraft = useMessageFeedUsernameDraft(activeAuthorUsername);
   const dateDraft = useMessageFeedDateDraft(activeDateRange);
@@ -42,13 +45,18 @@ export const useMessageFeedFilters = ({
   const syncDraftsFromActive = useCallback(() => {
     setTagInput(activeTag ?? '');
     setTagError(null);
+    setBookmarkedOnlyInput(activeBookmarkedOnly);
     usernameDraft.syncUsernameFromActive();
     dateDraft.syncDateFromActive();
-  }, [activeTag, dateDraft, usernameDraft]);
+  }, [activeBookmarkedOnly, activeTag, dateDraft, usernameDraft]);
 
   const handleTagChange = useCallback((value: string) => {
     setTagInput(value);
     setTagError(null);
+  }, []);
+
+  const handleBookmarkedOnlyChange = useCallback((value: boolean) => {
+    setBookmarkedOnlyInput(value);
   }, []);
 
   const validateAllDrafts = useCallback((): MessageFeedFiltersValue | null => {
@@ -73,14 +81,16 @@ export const useMessageFeedFilters = ({
 
     return {
       authorUsername: usernameDraft.resolveUsername(),
+      bookmarkedOnly: bookmarkedOnlyInput,
       categoryTag: resolveTagFromDraft(tagInput),
       dateRange,
     };
-  }, [dateDraft, tagInput, usernameDraft]);
+  }, [bookmarkedOnlyInput, dateDraft, tagInput, usernameDraft]);
 
   const clearDrafts = useCallback(() => {
     setTagInput('');
     setTagError(null);
+    setBookmarkedOnlyInput(false);
     usernameDraft.clearUsernameDraft();
     dateDraft.clearDateDraft();
   }, [dateDraft, usernameDraft]);
@@ -88,12 +98,15 @@ export const useMessageFeedFilters = ({
   const activeFilterCount =
     (activeTag !== null ? 1 : 0) +
     (activeDateRange !== null ? 1 : 0) +
-    (activeAuthorUsername !== null ? 1 : 0);
+    (activeAuthorUsername !== null ? 1 : 0) +
+    (activeBookmarkedOnly ? 1 : 0);
 
   return {
     activeFilterCount,
+    bookmarkedOnlyInput,
     clearDrafts,
     ...dateDraft,
+    handleBookmarkedOnlyChange,
     handleTagChange,
     handleUsernameBlur: usernameDraft.handleUsernameBlur,
     handleUsernameChange: usernameDraft.handleUsernameChange,

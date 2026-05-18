@@ -21,3 +21,4 @@ test-results
 .venv-schemathesis
 # Agent Playwright sandbox (RECON, reports, generated scratch) — committed tests live in apps/e2e
 .playwright-output
+.cursor

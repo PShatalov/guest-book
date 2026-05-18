@@ -3,6 +3,7 @@ import type { MessageDateRangeFilter } from '@/lib/messages/messageDateRange';
 
 export type MessageListFilterKey = {
   authorUsername: string | null;
+  bookmarkedOnly: boolean;
   categoryTag: string | null;
   dateRange: MessageDateRangeFilter | null;
 };
@@ -10,11 +11,17 @@ export type MessageListFilterKey = {
 export const messageKeys = {
   all: ['messages'] as const,
   lists: () => [...messageKeys.all, 'list'] as const,
-  list: ({ authorUsername, categoryTag, dateRange }: MessageListFilterKey) =>
+  list: ({
+    authorUsername,
+    bookmarkedOnly,
+    categoryTag,
+    dateRange,
+  }: MessageListFilterKey) =>
     [
       ...messageKeys.lists(),
       categoryTag ?? 'all',
       dateRangeFilterKey(dateRange),
       authorUsername ?? 'all',
+      bookmarkedOnly ? 'bookmarked' : 'all-bookmarks',
     ] as const,
 };

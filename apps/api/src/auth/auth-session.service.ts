@@ -38,6 +38,16 @@ export class AuthSessionService {
     return { id: userId, username };
   }
 
+  getOptionalCurrentUser(request: Request): SafeUserDto | null {
+    const { userId, username } = request.session;
+
+    if (!userId || !username) {
+      return null;
+    }
+
+    return { id: userId, username };
+  }
+
   async destroySession(request: Request): Promise<void> {
     await new Promise<void>((resolve, reject) => {
       request.session.destroy((error) => {

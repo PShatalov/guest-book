@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsInt,
   IsISO8601,
   IsOptional,
@@ -81,4 +82,25 @@ export class ListMessagesQueryDto {
   @MinLength(1, { message: 'authorUsername must not be empty' })
   @MaxLength(64)
   authorUsername?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'When true, return only messages bookmarked by the current signed-in user.',
+    type: Boolean,
+    example: true,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') {
+      return true;
+    }
+
+    if (value === 'false') {
+      return false;
+    }
+
+    return value;
+  })
+  @IsBoolean()
+  bookmarkedOnly?: boolean;
 }

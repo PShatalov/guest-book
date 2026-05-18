@@ -2,11 +2,13 @@ import { getMessageFeedEmptyCopy } from './messageFeedEmptyCopy';
 
 describe('getMessageFeedEmptyCopy', () => {
   it('returns unfiltered copy when no filters are active', () => {
-    expect(getMessageFeedEmptyCopy(null, null, null)).toBe('No messages yet');
+    expect(getMessageFeedEmptyCopy(null, false, null, null)).toBe(
+      'No messages yet',
+    );
   });
 
   it('returns tag-only copy when only a tag filter is active', () => {
-    expect(getMessageFeedEmptyCopy('news', null, null)).toBe(
+    expect(getMessageFeedEmptyCopy('news', false, null, null)).toBe(
       'No messages match this tag',
     );
   });
@@ -15,6 +17,7 @@ describe('getMessageFeedEmptyCopy', () => {
     expect(
       getMessageFeedEmptyCopy(
         null,
+        false,
         {
           createdFrom: '2026-05-01T00:00:00.000Z',
         },
@@ -24,8 +27,14 @@ describe('getMessageFeedEmptyCopy', () => {
   });
 
   it('returns username-only copy when only a username filter is active', () => {
-    expect(getMessageFeedEmptyCopy(null, null, 'alice')).toBe(
+    expect(getMessageFeedEmptyCopy(null, false, null, 'alice')).toBe(
       'No messages from this user',
+    );
+  });
+
+  it('returns bookmarked-only copy when only the bookmark filter is active', () => {
+    expect(getMessageFeedEmptyCopy(null, true, null, null)).toBe(
+      'No bookmarked messages yet',
     );
   });
 
@@ -33,6 +42,7 @@ describe('getMessageFeedEmptyCopy', () => {
     expect(
       getMessageFeedEmptyCopy(
         'news',
+        false,
         {
           createdTo: '2026-05-31T23:59:59.999Z',
         },
@@ -42,7 +52,13 @@ describe('getMessageFeedEmptyCopy', () => {
   });
 
   it('returns combined copy when username and tag filters are active', () => {
-    expect(getMessageFeedEmptyCopy('news', null, 'alice')).toBe(
+    expect(getMessageFeedEmptyCopy('news', false, null, 'alice')).toBe(
+      'No messages match these filters',
+    );
+  });
+
+  it('returns combined copy when bookmarked-only and tag filters are active', () => {
+    expect(getMessageFeedEmptyCopy('news', true, null, null)).toBe(
       'No messages match these filters',
     );
   });

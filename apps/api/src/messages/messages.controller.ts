@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
   Req,
   UseGuards,
@@ -26,6 +27,7 @@ import {
 } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { AuthenticatedSessionGuard } from '../common/guards/authenticated-session.guard';
+import { BookmarkMessageResponseDto } from './dto/bookmark-message-response.dto';
 import { CreateMessageRequestDto } from './dto/create-message-request.dto';
 import { ListMessagesQueryDto } from './dto/list-messages-query.dto';
 import { MessageResponseDto } from './dto/message-response.dto';
@@ -63,8 +65,38 @@ export class MessagesController {
   @ApiBadRequestResponse({ description: 'Validation failed' })
   async list(
     @Query() query: ListMessagesQueryDto,
+    @Req() request: Request,
   ): Promise<PaginatedMessagesResponseDto> {
-    return this.messagesApplicationService.listMessages(query);
+    return this.messagesApplicationService.listMessages(request, query);
+  }
+
+  @Put(':id/bookmark')
+  @UseGuards(AuthenticatedSessionGuard)
+  @ApiOperation({ summary: 'Bookmark a message for the signed-in user' })
+  @ApiOkResponse({ type: BookmarkMessageResponseDto })
+  @ApiBadRequestResponse({ description: 'Invalid message id' })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  @ApiNotFoundResponse({ description: 'Message not found' })
+  async bookmark(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request,
+  ): Promise<BookmarkMessageResponseDto> {
+    return this.messagesApplicationService.bookmarkMessage(request, id);
+  }
+
+  @Delete(':id/bookmark')
+  @UseGuards(AuthenticatedSessionGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Remove a message bookmark for the signed-in user' })
+  @ApiNoContentResponse({ description: 'Message unbookmarked' })
+  @ApiBadRequestResponse({ description: 'Invalid message id' })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  @ApiNotFoundResponse({ description: 'Message not found' })
+  async unbookmark(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request,
+  ): Promise<void> {
+    await this.messagesApplicationService.unbookmarkMessage(request, id);
   }
 
   @Patch(':id')

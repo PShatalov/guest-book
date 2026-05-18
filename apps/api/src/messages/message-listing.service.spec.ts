@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MessageListingService } from './message-listing.service';
 import { MessageFeedReadRepository } from './message-feed-read.repository';
@@ -12,6 +12,7 @@ describe('MessageListingService', () => {
       id: string;
       createdAt: Date;
       categoryTag: string;
+      isBookmarked: boolean;
     }> = {},
   ) => ({
     id: overrides.id ?? '11111111-1111-4111-8111-111111111111',
@@ -19,6 +20,7 @@ describe('MessageListingService', () => {
     categoryTag: overrides.categoryTag ?? 'general',
     authorUsername: 'alice',
     createdAt: overrides.createdAt ?? new Date('2026-05-15T12:00:00.000Z'),
+    isBookmarked: overrides.isBookmarked ?? false,
   });
 
   beforeEach(async () => {
@@ -50,7 +52,48 @@ describe('MessageListingService', () => {
       authorUsername: undefined,
       createdFrom: undefined,
       createdTo: undefined,
+      viewerId: undefined,
+      bookmarkedOnly: false,
     });
+  });
+
+  it('passes the current viewer id and maps bookmarked feed state', async () => {
+    repository.findPage.mockResolvedValue({
+      rows: [row({ isBookmarked: true })],
+      hasMore: false,
+    });
+
+    const result = await service.list(
+      {},
+      { id: 'viewer-id', username: 'viewer' },
+    );
+
+    expect(repository.findPage).toHaveBeenCalledWith(
+      expect.objectContaining({ viewerId: 'viewer-id', bookmarkedOnly: false }),
+    );
+    expect(result.items[0]).toMatchObject({ isBookmarked: true });
+  });
+
+  it('passes bookmarked-only filtering for the current viewer', async () => {
+    await service.list(
+      { bookmarkedOnly: true },
+      { id: 'viewer-id', username: 'viewer' },
+    );
+
+    expect(repository.findPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        viewerId: 'viewer-id',
+        bookmarkedOnly: true,
+      }),
+    );
+  });
+
+  it('rejects bookmarked-only filtering without a current viewer', async () => {
+    await expect(service.list({ bookmarkedOnly: true })).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
+
+    expect(repository.findPage).not.toHaveBeenCalled();
   });
 
   it('normalizes the category tag filter before querying', async () => {

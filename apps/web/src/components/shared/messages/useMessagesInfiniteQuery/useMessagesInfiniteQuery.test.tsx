@@ -38,6 +38,7 @@ describe('useMessagesInfiniteQuery', () => {
           categoryTag: 'general',
           authorUsername: 'alice',
           createdAt: '2026-05-15T12:00:00.000Z',
+          isBookmarked: false,
         },
       ],
       hasMore: false,
@@ -48,6 +49,7 @@ describe('useMessagesInfiniteQuery', () => {
       () =>
         useMessagesInfiniteQuery({
           authorUsername: null,
+          bookmarkedOnly: false,
           categoryTag: null,
           dateRange: null,
         }),
@@ -74,6 +76,7 @@ describe('useMessagesInfiniteQuery', () => {
       () =>
         useMessagesInfiniteQuery({
           authorUsername: null,
+          bookmarkedOnly: false,
           categoryTag: 'general',
           dateRange: null,
         }),
@@ -99,6 +102,7 @@ describe('useMessagesInfiniteQuery', () => {
       () =>
         useMessagesInfiniteQuery({
           authorUsername: null,
+          bookmarkedOnly: false,
           categoryTag: null,
           dateRange: { createdFrom: '2026-05-01T00:00:00.000Z' },
         }),
@@ -124,6 +128,7 @@ describe('useMessagesInfiniteQuery', () => {
       () =>
         useMessagesInfiniteQuery({
           authorUsername: null,
+          bookmarkedOnly: false,
           categoryTag: 'general',
           dateRange: {
             createdFrom: '2026-05-01T00:00:00.000Z',
@@ -152,6 +157,7 @@ describe('useMessagesInfiniteQuery', () => {
       () =>
         useMessagesInfiniteQuery({
           authorUsername: null,
+          bookmarkedOnly: false,
           categoryTag: null,
           dateRange: {
             createdFrom: '2026-05-01T00:00:00.000Z',
@@ -180,6 +186,7 @@ describe('useMessagesInfiniteQuery', () => {
       () =>
         useMessagesInfiniteQuery({
           authorUsername: 'alice',
+          bookmarkedOnly: false,
           categoryTag: null,
           dateRange: null,
         }),
@@ -190,6 +197,32 @@ describe('useMessagesInfiniteQuery', () => {
 
     expect(mockApiFetchClient).toHaveBeenCalledWith(
       '/messages?limit=5&authorUsername=alice',
+      expect.any(Object),
+    );
+  });
+
+  it('includes bookmarkedOnly in the request when filtering bookmarks', async () => {
+    mockApiFetchClient.mockResolvedValue({
+      items: [],
+      hasMore: false,
+      nextCursor: null,
+    });
+
+    const { result } = renderHook(
+      () =>
+        useMessagesInfiniteQuery({
+          authorUsername: null,
+          bookmarkedOnly: true,
+          categoryTag: null,
+          dateRange: null,
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockApiFetchClient).toHaveBeenCalledWith(
+      '/messages?limit=5&bookmarkedOnly=true',
       expect.any(Object),
     );
   });
@@ -205,6 +238,7 @@ describe('useMessagesInfiniteQuery', () => {
       () =>
         useMessagesInfiniteQuery({
           authorUsername: null,
+          bookmarkedOnly: false,
           categoryTag: null,
           dateRange: null,
         }),

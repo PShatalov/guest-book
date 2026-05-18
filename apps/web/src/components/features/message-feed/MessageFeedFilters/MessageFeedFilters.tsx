@@ -18,8 +18,10 @@ import {
 
 export type MessageFeedFiltersProps = {
   activeAuthorUsername: string | null;
+  activeBookmarkedOnly: boolean;
   activeDateRange: MessageDateRangeFilter | null;
   activeTag: string | null;
+  isSignedIn: boolean;
   onFiltersChange: (filters: MessageFeedFiltersValue) => void;
 };
 
@@ -27,6 +29,7 @@ const FILTER_SECTIONS = [
   { id: MESSAGE_FEED_FILTER_SECTION_IDS.categoryTag, label: 'Category tag' },
   { id: MESSAGE_FEED_FILTER_SECTION_IDS.dateTime, label: 'Date & time' },
   { id: MESSAGE_FEED_FILTER_SECTION_IDS.authorUsername, label: 'User name' },
+  { id: MESSAGE_FEED_FILTER_SECTION_IDS.bookmarks, label: 'Bookmarks' },
 ] as const;
 
 const isFilterSectionId = (
@@ -36,8 +39,10 @@ const isFilterSectionId = (
 
 export const MessageFeedFilters = ({
   activeAuthorUsername,
+  activeBookmarkedOnly,
   activeDateRange,
   activeTag,
+  isSignedIn,
   onFiltersChange,
 }: MessageFeedFiltersProps) => {
   const popoverId = useId();
@@ -46,6 +51,7 @@ export const MessageFeedFilters = ({
 
   const filterState = useMessageFeedFilters({
     activeAuthorUsername,
+    activeBookmarkedOnly,
     activeDateRange,
     activeTag,
   });
@@ -79,6 +85,7 @@ export const MessageFeedFilters = ({
     filterState.clearDrafts();
     onFiltersChange({
       authorUsername: null,
+      bookmarkedOnly: false,
       categoryTag: null,
       dateRange: null,
     });
@@ -127,10 +134,13 @@ export const MessageFeedFilters = ({
         selectedSectionId={filterState.selectedSectionId}
       >
         <MessageFeedFilterSectionContent
+          bookmarkedOnlyInput={filterState.bookmarkedOnlyInput}
           end={filterState.end}
           endError={filterState.endError}
           generalError={filterState.generalError}
           hasDateValidationError={filterState.hasDateValidationError}
+          isSignedIn={isSignedIn}
+          onBookmarkedOnlyChange={filterState.handleBookmarkedOnlyChange}
           onDismissDateErrors={filterState.handleDismissDateErrors}
           onEndBlur={filterState.handleEndBlur}
           onEndChange={filterState.handleEndChange}

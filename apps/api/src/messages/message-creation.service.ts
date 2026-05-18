@@ -8,6 +8,7 @@ export type MessageDto = {
   categoryTag: string;
   authorUsername: string;
   createdAt: string;
+  isBookmarked: boolean;
 };
 
 const MAX_CATEGORY_TAG_LENGTH = 32;
@@ -55,6 +56,7 @@ export class MessageCreationService {
       categoryTag: record.categoryTag,
       authorUsername: author.username,
       createdAt: record.createdAt.toISOString(),
+      isBookmarked: false,
     };
   }
 }

@@ -15,6 +15,7 @@ const DEFAULT_PAGE_SIZE = 5;
 
 export type MessagesFeedFilters = {
   authorUsername: string | null;
+  bookmarkedOnly: boolean;
   categoryTag: string | null;
   dateRange: MessageDateRangeFilter | null;
 };
@@ -23,6 +24,7 @@ type ListMessagesParams = {
   limit?: number;
   cursor?: string;
   authorUsername?: string;
+  bookmarkedOnly?: boolean;
   categoryTag?: string;
   createdFrom?: string;
   createdTo?: string;
@@ -32,6 +34,7 @@ const buildMessagesPath = ({
   limit = DEFAULT_PAGE_SIZE,
   cursor,
   authorUsername,
+  bookmarkedOnly,
   categoryTag,
   createdFrom,
   createdTo,
@@ -43,6 +46,9 @@ const buildMessagesPath = ({
   }
   if (authorUsername !== undefined) {
     search.set('authorUsername', authorUsername);
+  }
+  if (bookmarkedOnly === true) {
+    search.set('bookmarkedOnly', 'true');
   }
   if (categoryTag !== undefined) {
     search.set('categoryTag', categoryTag);
@@ -64,7 +70,7 @@ const parsePaginatedMessages = (data: unknown): PaginatedMessages => {
 };
 
 export const useMessagesInfiniteQuery = (filters: MessagesFeedFilters) => {
-  const { authorUsername, categoryTag, dateRange } = filters;
+  const { authorUsername, bookmarkedOnly, categoryTag, dateRange } = filters;
 
   return useInfiniteQuery<
     PaginatedMessages,
@@ -73,12 +79,18 @@ export const useMessagesInfiniteQuery = (filters: MessagesFeedFilters) => {
     ReturnType<typeof messageKeys.list>,
     string | undefined
   >({
-    queryKey: messageKeys.list({ authorUsername, categoryTag, dateRange }),
+    queryKey: messageKeys.list({
+      authorUsername,
+      bookmarkedOnly,
+      categoryTag,
+      dateRange,
+    }),
     queryFn: async ({ pageParam, signal }) => {
       const data = await apiFetchClient<unknown>(
         buildMessagesPath({
           cursor: pageParam,
           authorUsername: authorUsername ?? undefined,
+          bookmarkedOnly,
           categoryTag: categoryTag ?? undefined,
           createdFrom: dateRange?.createdFrom,
           createdTo: dateRange?.createdTo,

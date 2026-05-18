@@ -10,7 +10,7 @@ import type { Message } from '@/lib/messages/messageTypes';
 
 import { DeleteMessageConfirmDialog } from '../DeleteMessageConfirmDialog';
 import { MessageInlineEditForm } from '../MessageInlineEditForm';
-import { MessageListItemAuthorActions } from '../MessageListItemAuthorActions';
+import { MessageListItemActions } from '../MessageListItemActions';
 import { messageListItemStyles } from './MessageListItem.styles';
 import { MessageListItemReadContent } from './MessageListItemReadContent/MessageListItemReadContent';
 import { mapMessageMutationError } from './mapMessageMutationError';
@@ -41,6 +41,7 @@ export const MessageListItem = ({
 
   const canManage =
     currentUsername !== null && currentUsername === message.authorUsername;
+  const isSignedIn = currentUsername !== null;
   const postedAtLabel = formatPostedAt(message.createdAt);
 
   const handleEdit = () => {
@@ -119,8 +120,11 @@ export const MessageListItem = ({
           ) : (
             <MessageListItemReadContent
               actions={
-                <MessageListItemAuthorActions
+                <MessageListItemActions
                   canManage={canManage}
+                  isBookmarked={message.isBookmarked}
+                  isSignedIn={isSignedIn}
+                  messageId={message.id}
                   onDelete={handleDeleteOpen}
                   onEdit={handleEdit}
                 />

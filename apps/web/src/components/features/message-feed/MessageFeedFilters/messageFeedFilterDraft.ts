@@ -9,6 +9,7 @@ export const MESSAGE_FEED_FILTER_SECTION_IDS = {
   categoryTag: 'category-tag',
   dateTime: 'date-time',
   authorUsername: 'user-name',
+  bookmarks: 'bookmarks',
 } as const;
 
 export type MessageFeedFilterSectionId =
@@ -16,6 +17,7 @@ export type MessageFeedFilterSectionId =
 
 export type MessageFeedFiltersValue = {
   authorUsername: string | null;
+  bookmarkedOnly: boolean;
   categoryTag: string | null;
   dateRange: MessageDateRangeFilter | null;
 };

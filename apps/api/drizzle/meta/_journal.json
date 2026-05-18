@@ -22,6 +22,13 @@
       "when": 1778856200000,
       "tag": "0002_create_message_feed_view",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778859800000,
+      "tag": "0003_create_message_bookmarks",
+      "breakpoints": true
     }
   ]
 }

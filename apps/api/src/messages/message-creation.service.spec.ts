@@ -48,6 +48,7 @@ describe('MessageCreationService', () => {
       categoryTag: 'general',
       authorUsername: 'alice',
       createdAt: createdAt.toISOString(),
+      isBookmarked: false,
     });
 
     expect(repository.create).toHaveBeenCalledWith({

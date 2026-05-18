@@ -14,10 +14,18 @@ const sampleMessage = {
   categoryTag: 'general',
   authorUsername: 'alice',
   createdAt: '2026-05-15T12:00:00.000Z',
+  isBookmarked: false,
 };
 
 const mockFetchNextPage = jest.fn();
 const mockRefetch = jest.fn();
+let mockUsername: string | null = null;
+let mockLastFilters: {
+  authorUsername: string | null;
+  bookmarkedOnly: boolean;
+  categoryTag: string | null;
+  dateRange: unknown;
+} | null = null;
 
 type MockQueryState = {
   data?: {
@@ -28,6 +36,7 @@ type MockQueryState = {
         categoryTag: string;
         authorUsername: string;
         createdAt: string;
+        isBookmarked: boolean;
       }>;
       hasMore: boolean;
       nextCursor: string | null;
@@ -54,12 +63,15 @@ let mockQueryState: MockQueryState = {
 };
 
 jest.mock('@/components/shared/messages/useMessagesInfiniteQuery', () => ({
-  useMessagesInfiniteQuery: () => mockQueryState,
+  useMessagesInfiniteQuery: (filters: typeof mockLastFilters) => {
+    mockLastFilters = filters;
+    return mockQueryState;
+  },
 }));
 
 jest.mock('@/components/shared/auth/useAuthSession', () => ({
   useAuthSession: () => ({
-    username: null,
+    username: mockUsername,
     isPending: false,
     isError: false,
     error: null,
@@ -106,6 +118,11 @@ const applyUsernameFilter = (username: string) => {
   applyFilters();
 };
 
+const openBookmarkedOnlyFilter = () => {
+  openFilterPopover();
+  fireEvent.click(screen.getByTestId('filter-popover-nav-bookmarks'));
+};
+
 const applyDateFilterFrom = (value: string) => {
   openFilterPopover();
   fireEvent.click(screen.getByTestId('filter-popover-nav-date-time'));
@@ -140,6 +157,8 @@ describe('MessageFeedPanel', () => {
   beforeEach(() => {
     mockFetchNextPage.mockReset();
     mockRefetch.mockReset();
+    mockUsername = null;
+    mockLastFilters = null;
     mockQueryState = {
       data: { pages: [{ items: [], hasMore: false, nextCursor: null }] },
       fetchNextPage: mockFetchNextPage,
@@ -192,6 +211,38 @@ describe('MessageFeedPanel', () => {
 
     expect(screen.getByTestId('message-feed-empty')).toHaveTextContent(
       'No messages from this user',
+    );
+  });
+
+  it('keeps bookmarked-only filtering unavailable while signed out', () => {
+    renderMessageFeedPanel();
+    openBookmarkedOnlyFilter();
+
+    const checkbox = screen.getByRole('checkbox', {
+      name: /show bookmarked messages only/i,
+    });
+
+    expect(checkbox).toBeDisabled();
+    expect(
+      screen.getByText(/sign in to filter by bookmarks/i),
+    ).toBeInTheDocument();
+  });
+
+  it('applies bookmarked-only filtering for signed-in users', () => {
+    mockUsername = 'alice';
+    renderMessageFeedPanel();
+    openBookmarkedOnlyFilter();
+
+    fireEvent.click(
+      screen.getByRole('checkbox', {
+        name: /show bookmarked messages only/i,
+      }),
+    );
+    applyFilters();
+
+    expect(mockLastFilters?.bookmarkedOnly).toBe(true);
+    expect(screen.getByTestId('message-feed-empty')).toHaveTextContent(
+      'No bookmarked messages yet',
     );
   });
 

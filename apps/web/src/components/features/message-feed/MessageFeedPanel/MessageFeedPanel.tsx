@@ -25,15 +25,19 @@ export const MessageFeedPanel = () => {
   >(null);
   const [activeDateRange, setActiveDateRange] =
     useState<MessageDateRangeFilter | null>(null);
+  const [activeBookmarkedOnly, setActiveBookmarkedOnly] = useState(false);
   const [isErrorDismissed, setIsErrorDismissed] = useState(false);
+  const isSignedIn = username !== null;
+  const effectiveBookmarkedOnly = isSignedIn && activeBookmarkedOnly;
 
   const feedFilters = useMemo(
     () => ({
       authorUsername: activeAuthorUsername,
+      bookmarkedOnly: effectiveBookmarkedOnly,
       categoryTag: activeTag,
       dateRange: activeDateRange,
     }),
-    [activeAuthorUsername, activeTag, activeDateRange],
+    [activeAuthorUsername, activeDateRange, activeTag, effectiveBookmarkedOnly],
   );
 
   const {
@@ -57,6 +61,7 @@ export const MessageFeedPanel = () => {
     !showInitialLoading && !isError && items.length === 0 && !isRefetching;
   const emptyMessage = getMessageFeedEmptyCopy(
     activeTag,
+    effectiveBookmarkedOnly,
     activeDateRange,
     activeAuthorUsername,
   );
@@ -71,10 +76,18 @@ export const MessageFeedPanel = () => {
     <Stack spacing={2} sx={messageFeedPanelStyles.root}>
       <MessageFeedFilters
         activeAuthorUsername={activeAuthorUsername}
+        activeBookmarkedOnly={effectiveBookmarkedOnly}
         activeDateRange={activeDateRange}
         activeTag={activeTag}
-        onFiltersChange={({ authorUsername, categoryTag, dateRange }) => {
+        isSignedIn={isSignedIn}
+        onFiltersChange={({
+          authorUsername,
+          bookmarkedOnly,
+          categoryTag,
+          dateRange,
+        }) => {
           setActiveAuthorUsername(authorUsername);
+          setActiveBookmarkedOnly(isSignedIn && bookmarkedOnly);
           setActiveTag(categoryTag);
           setActiveDateRange(dateRange);
         }}

@@ -550,6 +550,345 @@ describe('MessagesController (e2e)', () => {
           );
         });
     });
+
+    it('returns only the signed-in user bookmarked messages when bookmarkedOnly is true', async () => {
+      const author = await registerAndLogin(
+        app,
+        uniqueUsername('bookmarked_filter_author'),
+      );
+      const viewer = await registerAndLogin(
+        app,
+        uniqueUsername('bookmarked_filter_viewer'),
+      );
+      const otherViewer = await registerAndLogin(
+        app,
+        uniqueUsername('bookmarked_filter_other'),
+      );
+
+      const bookmarkedGeneral = await author
+        .post('/messages')
+        .send({ text: 'Saved general', categoryTag: 'general' })
+        .expect(201);
+      const bookmarkedNews = await author
+        .post('/messages')
+        .send({ text: 'Saved news', categoryTag: 'news' })
+        .expect(201);
+      const newerBookmarkedGeneral = await author
+        .post('/messages')
+        .send({ text: 'Saved general newest', categoryTag: 'general' })
+        .expect(201);
+      const unbookmarkedGeneral = await author
+        .post('/messages')
+        .send({ text: 'Unsaved general', categoryTag: 'general' })
+        .expect(201);
+
+      await viewer
+        .put(`/messages/${bookmarkedGeneral.body.id}/bookmark`)
+        .expect(200);
+      await viewer
+        .put(`/messages/${bookmarkedNews.body.id}/bookmark`)
+        .expect(200);
+      await viewer
+        .put(`/messages/${newerBookmarkedGeneral.body.id}/bookmark`)
+        .expect(200);
+      await otherViewer
+        .put(`/messages/${unbookmarkedGeneral.body.id}/bookmark`)
+        .expect(200);
+
+      const firstPage = await viewer
+        .get('/messages')
+        .query({ bookmarkedOnly: true, categoryTag: 'general', limit: 1 })
+        .expect(200);
+
+      expect(firstPage.body.items).toHaveLength(1);
+      expect(firstPage.body.items[0]).toMatchObject({
+        id: newerBookmarkedGeneral.body.id,
+        categoryTag: 'general',
+        isBookmarked: true,
+      });
+      expect(firstPage.body.hasMore).toBe(true);
+      expect(firstPage.body.nextCursor).toEqual(expect.any(String));
+      expect(firstPage.body.items).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: bookmarkedNews.body.id }),
+          expect.objectContaining({ id: unbookmarkedGeneral.body.id }),
+        ]),
+      );
+
+      const secondPage = await viewer
+        .get('/messages')
+        .query({
+          bookmarkedOnly: true,
+          categoryTag: 'general',
+          limit: 1,
+          cursor: firstPage.body.nextCursor,
+        })
+        .expect(200);
+
+      expect(secondPage.body.items).toHaveLength(1);
+      expect(secondPage.body.items[0]).toMatchObject({
+        id: bookmarkedGeneral.body.id,
+        categoryTag: 'general',
+        isBookmarked: true,
+      });
+      expect(secondPage.body.hasMore).toBe(false);
+    });
+
+    it('returns 401 when bookmarkedOnly is true without authentication', async () => {
+      await request(app.getHttpServer())
+        .get('/messages')
+        .query({ bookmarkedOnly: true })
+        .expect(401)
+        .expect((res) => {
+          expect(res.body.message).toContain('Not authenticated');
+        });
+    });
+
+    it('keeps public list access when bookmarkedOnly is omitted or false', async () => {
+      const agent = await registerAndLogin(
+        app,
+        uniqueUsername('public_bookmarked_false'),
+      );
+      const created = await agent
+        .post('/messages')
+        .send({ text: 'Still public', categoryTag: 'general' })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .get('/messages')
+        .query({ bookmarkedOnly: false })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.items).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                id: created.body.id,
+                isBookmarked: false,
+              }),
+            ]),
+          );
+        });
+    });
+  });
+
+  describe('PUT /messages/:id/bookmark', () => {
+    async function createMessage(
+      agent: Awaited<ReturnType<typeof registerAndLogin>>,
+    ) {
+      const response = await agent
+        .post('/messages')
+        .send({ text: 'Bookmark me', categoryTag: 'general' })
+        .expect(201);
+      return response.body as { id: string };
+    }
+
+    it('bookmarks a message for the signed-in user and exposes viewer-specific feed state', async () => {
+      const author = await registerAndLogin(
+        app,
+        uniqueUsername('bookmark_author'),
+      );
+      const viewer = await registerAndLogin(
+        app,
+        uniqueUsername('bookmark_viewer'),
+      );
+      const otherViewer = await registerAndLogin(
+        app,
+        uniqueUsername('bookmark_other'),
+      );
+      const created = await createMessage(author);
+
+      await viewer
+        .put(`/messages/${created.id}/bookmark`)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body).toMatchObject({
+            messageId: created.id,
+            isBookmarked: true,
+            createdAt: expect.any(String),
+          });
+        });
+
+      await viewer
+        .get('/messages')
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.items).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                id: created.id,
+                isBookmarked: true,
+              }),
+            ]),
+          );
+        });
+
+      await otherViewer
+        .get('/messages')
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.items).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                id: created.id,
+                isBookmarked: false,
+              }),
+            ]),
+          );
+        });
+
+      await request(app.getHttpServer())
+        .get('/messages')
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.items).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                id: created.id,
+                isBookmarked: false,
+              }),
+            ]),
+          );
+        });
+    });
+
+    it('bookmarks idempotently', async () => {
+      const author = await registerAndLogin(
+        app,
+        uniqueUsername('bookmark_idempotent_author'),
+      );
+      const viewer = await registerAndLogin(
+        app,
+        uniqueUsername('bookmark_idempotent_viewer'),
+      );
+      const created = await createMessage(author);
+
+      const firstBookmark = await viewer
+        .put(`/messages/${created.id}/bookmark`)
+        .expect(200);
+      const repeatedBookmark = await viewer
+        .put(`/messages/${created.id}/bookmark`)
+        .expect(200);
+
+      expect(repeatedBookmark.body).toMatchObject({
+        messageId: created.id,
+        isBookmarked: true,
+        createdAt: firstBookmark.body.createdAt,
+      });
+
+      await viewer
+        .get('/messages')
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.items).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                id: created.id,
+                isBookmarked: true,
+              }),
+            ]),
+          );
+        });
+    });
+
+    it('returns 401 when bookmarking without authentication', async () => {
+      const author = await registerAndLogin(
+        app,
+        uniqueUsername('bookmark_unauth_author'),
+      );
+      const created = await createMessage(author);
+
+      await request(app.getHttpServer())
+        .put(`/messages/${created.id}/bookmark`)
+        .expect(401)
+        .expect((res) => {
+          expect(res.body.message).toContain('Not authenticated');
+        });
+    });
+
+    it('returns 404 when bookmarking a missing message', async () => {
+      const viewer = await registerAndLogin(
+        app,
+        uniqueUsername('bookmark_missing'),
+      );
+
+      await viewer
+        .put('/messages/550e8400-e29b-41d4-a716-446655440000/bookmark')
+        .expect(404)
+        .expect((res) => {
+          expect(res.body.message).toContain('Message not found');
+        });
+    });
+  });
+
+  describe('DELETE /messages/:id/bookmark', () => {
+    async function createMessage(
+      agent: Awaited<ReturnType<typeof registerAndLogin>>,
+    ) {
+      const response = await agent
+        .post('/messages')
+        .send({ text: 'Unbookmark me', categoryTag: 'general' })
+        .expect(201);
+      return response.body as { id: string };
+    }
+
+    it('unbookmarks a message idempotently for the signed-in user', async () => {
+      const author = await registerAndLogin(
+        app,
+        uniqueUsername('unbookmark_author'),
+      );
+      const viewer = await registerAndLogin(
+        app,
+        uniqueUsername('unbookmark_viewer'),
+      );
+      const created = await createMessage(author);
+
+      await viewer.put(`/messages/${created.id}/bookmark`).expect(200);
+      await viewer.delete(`/messages/${created.id}/bookmark`).expect(204);
+      await viewer.delete(`/messages/${created.id}/bookmark`).expect(204);
+
+      await viewer
+        .get('/messages')
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.items).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                id: created.id,
+                isBookmarked: false,
+              }),
+            ]),
+          );
+        });
+    });
+
+    it('returns 401 when unbookmarking without authentication', async () => {
+      const author = await registerAndLogin(
+        app,
+        uniqueUsername('unbookmark_unauth_author'),
+      );
+      const created = await createMessage(author);
+
+      await request(app.getHttpServer())
+        .delete(`/messages/${created.id}/bookmark`)
+        .expect(401)
+        .expect((res) => {
+          expect(res.body.message).toContain('Not authenticated');
+        });
+    });
+
+    it('returns 404 when unbookmarking a missing message', async () => {
+      const viewer = await registerAndLogin(
+        app,
+        uniqueUsername('unbookmark_missing'),
+      );
+
+      await viewer
+        .delete('/messages/550e8400-e29b-41d4-a716-446655440000/bookmark')
+        .expect(404)
+        .expect((res) => {
+          expect(res.body.message).toContain('Message not found');
+        });
+    });
   });
 
   describe('PATCH /messages/:id', () => {

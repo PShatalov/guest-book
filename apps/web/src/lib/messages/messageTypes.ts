@@ -4,6 +4,7 @@ export type Message = {
   categoryTag: string;
   authorUsername: string;
   createdAt: string;
+  isBookmarked: boolean;
 };
 
 export const isMessage = (value: unknown): value is Message => {
@@ -16,7 +17,8 @@ export const isMessage = (value: unknown): value is Message => {
     typeof record.text === 'string' &&
     typeof record.categoryTag === 'string' &&
     typeof record.authorUsername === 'string' &&
-    typeof record.createdAt === 'string'
+    typeof record.createdAt === 'string' &&
+    typeof record.isBookmarked === 'boolean'
   );
 };
 

@@ -13,10 +13,12 @@ const sampleMessage = {
   categoryTag: 'general',
   authorUsername: 'alice',
   createdAt: '2026-05-15T12:00:00.000Z',
+  isBookmarked: false,
 };
 
 const mockUpdateMutate = jest.fn();
 const mockDeleteMutate = jest.fn();
+const mockBookmarkMutate = jest.fn();
 
 jest.mock('@/components/shared/messages/useUpdateMessageMutation', () => ({
   useUpdateMessageMutation: () => ({
@@ -28,6 +30,13 @@ jest.mock('@/components/shared/messages/useUpdateMessageMutation', () => ({
 jest.mock('@/components/shared/messages/useDeleteMessageMutation', () => ({
   useDeleteMessageMutation: () => ({
     mutate: mockDeleteMutate,
+    isPending: false,
+  }),
+}));
+
+jest.mock('@/components/shared/messages/useBookmarkMessageMutation', () => ({
+  useBookmarkMessageMutation: () => ({
+    mutate: mockBookmarkMutate,
     isPending: false,
   }),
 }));
@@ -51,6 +60,7 @@ describe('MessageListItem', () => {
   beforeEach(() => {
     mockUpdateMutate.mockReset();
     mockDeleteMutate.mockReset();
+    mockBookmarkMutate.mockReset();
   });
 
   it('renders message text, tag, author, and posted time', () => {
@@ -66,6 +76,21 @@ describe('MessageListItem', () => {
     expect(screen.queryByTestId('message-edit-button')).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('message-delete-button'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows bookmark control for signed-in non-owners only', () => {
+    renderMessageListItem({ currentUsername: 'bob' });
+    expect(
+      screen.getByRole('button', { name: 'Bookmark message' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('message-edit-button')).not.toBeInTheDocument();
+  });
+
+  it('hides bookmark control for signed-out readers', () => {
+    renderMessageListItem({ currentUsername: null });
+    expect(
+      screen.queryByRole('button', { name: 'Bookmark message' }),
     ).not.toBeInTheDocument();
   });
 
@@ -93,7 +118,7 @@ describe('MessageListItem', () => {
     const listItem = screen.getByTestId('message-list-item');
     const categoryTag = within(listItem).getByText('general');
     const editButton = within(listItem).getByRole('button', { name: 'Edit' });
-    const footer = editButton.parentElement?.parentElement;
+    const footer = editButton.parentElement?.parentElement?.parentElement;
 
     expect(footer).toBeTruthy();
     expect(footer).toContainElement(categoryTag);

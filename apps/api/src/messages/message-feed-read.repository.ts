@@ -13,6 +13,7 @@ export type MessageFeedRow = {
   categoryTag: string;
   authorUsername: string;
   createdAt: Date;
+  isBookmarked: boolean;
 };
 
 export type MessageFeedPage = {
@@ -26,6 +27,7 @@ type MessageFeedQueryRow = {
   category_tag: string;
   author_username: string;
   created_at: Date | string;
+  is_bookmarked: boolean;
 };
 
 @Injectable()
@@ -46,6 +48,8 @@ export class MessageFeedReadRepository {
     authorUsername?: string;
     createdFrom?: Date;
     createdTo?: Date;
+    viewerId?: string;
+    bookmarkedOnly?: boolean;
   }): Promise<MessageFeedPage> {
     const db = this.requireDb();
     const fetchLimit = input.limit + 1;
@@ -75,6 +79,15 @@ export class MessageFeedReadRepository {
       );
     }
 
+    if (input.bookmarkedOnly === true && input.viewerId !== undefined) {
+      conditions.push(sql`EXISTS (
+        SELECT 1
+        FROM message_bookmarks mb_filter
+        WHERE mb_filter.message_id = message_feed.id
+          AND mb_filter.user_id = ${input.viewerId}::uuid
+      )`);
+    }
+
     const whereClause =
       conditions.length > 0
         ? sql`WHERE ${sql.join(conditions, sql` AND `)}`
@@ -87,7 +100,17 @@ export class MessageFeedReadRepository {
           text,
           category_tag,
           author_username,
-          created_at
+          created_at,
+          ${
+            input.viewerId
+              ? sql`EXISTS (
+                  SELECT 1
+                  FROM message_bookmarks mb
+                  WHERE mb.message_id = message_feed.id
+                    AND mb.user_id = ${input.viewerId}::uuid
+                )`
+              : sql`false`
+          } AS is_bookmarked
         FROM message_feed
         ${whereClause}
         ORDER BY created_at DESC, id DESC
@@ -133,6 +156,7 @@ export class MessageFeedReadRepository {
         row.created_at instanceof Date
           ? row.created_at
           : new Date(row.created_at),
+      isBookmarked: row.is_bookmarked,
     };
   }
 }

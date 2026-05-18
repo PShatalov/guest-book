@@ -11,6 +11,7 @@ describe('useMessageFeedFilters', () => {
     const { result } = renderHook(() =>
       useMessageFeedFilters({
         activeAuthorUsername: null,
+        activeBookmarkedOnly: false,
         activeDateRange: null,
         activeTag: null,
       }),
@@ -33,6 +34,7 @@ describe('useMessageFeedFilters', () => {
     const { result } = renderHook(() =>
       useMessageFeedFilters({
         activeAuthorUsername: null,
+        activeBookmarkedOnly: false,
         activeDateRange: null,
         activeTag: null,
       }),
@@ -52,6 +54,7 @@ describe('useMessageFeedFilters', () => {
     const { result } = renderHook(() =>
       useMessageFeedFilters({
         activeAuthorUsername: null,
+        activeBookmarkedOnly: false,
         activeDateRange: null,
         activeTag: null,
       }),
@@ -77,6 +80,7 @@ describe('useMessageFeedFilters', () => {
     const { result } = renderHook(() =>
       useMessageFeedFilters({
         activeAuthorUsername: null,
+        activeBookmarkedOnly: false,
         activeDateRange: null,
         activeTag: null,
       }),
@@ -96,6 +100,7 @@ describe('useMessageFeedFilters', () => {
 
     expect(committed!).toEqual({
       authorUsername: null,
+      bookmarkedOnly: false,
       categoryTag: 'general',
       dateRange: { createdFrom: start.toDate().toISOString() },
     });
@@ -105,6 +110,7 @@ describe('useMessageFeedFilters', () => {
     const { result } = renderHook(() =>
       useMessageFeedFilters({
         activeAuthorUsername: null,
+        activeBookmarkedOnly: false,
         activeDateRange: null,
         activeTag: null,
       }),
@@ -121,6 +127,7 @@ describe('useMessageFeedFilters', () => {
 
     expect(committed!).toEqual({
       authorUsername: 'alice',
+      bookmarkedOnly: false,
       categoryTag: null,
       dateRange: null,
     });
@@ -130,6 +137,7 @@ describe('useMessageFeedFilters', () => {
     const { result } = renderHook(() =>
       useMessageFeedFilters({
         activeAuthorUsername: 'alice',
+        activeBookmarkedOnly: true,
         activeDateRange: { createdFrom: '2026-05-01T00:00:00.000Z' },
         activeTag: 'news',
       }),
@@ -147,6 +155,7 @@ describe('useMessageFeedFilters', () => {
 
     expect(committed!).toEqual({
       authorUsername: null,
+      bookmarkedOnly: false,
       categoryTag: null,
       dateRange: null,
     });
@@ -156,6 +165,7 @@ describe('useMessageFeedFilters', () => {
     const { result } = renderHook(() =>
       useMessageFeedFilters({
         activeAuthorUsername: null,
+        activeBookmarkedOnly: false,
         activeDateRange: null,
         activeTag: null,
       }),
@@ -179,6 +189,47 @@ describe('useMessageFeedFilters', () => {
     const { result } = renderHook(() =>
       useMessageFeedFilters({
         activeAuthorUsername: 'alice',
+        activeBookmarkedOnly: false,
+        activeDateRange: null,
+        activeTag: null,
+      }),
+    );
+
+    expect(result.current.activeFilterCount).toBe(1);
+  });
+
+  it('commits bookmarked-only filtering when enabled', () => {
+    const { result } = renderHook(() =>
+      useMessageFeedFilters({
+        activeAuthorUsername: null,
+        activeBookmarkedOnly: false,
+        activeDateRange: null,
+        activeTag: null,
+      }),
+    );
+
+    act(() => {
+      result.current.handleBookmarkedOnlyChange(true);
+    });
+
+    let committed: ReturnType<typeof result.current.validateAllDrafts>;
+    act(() => {
+      committed = result.current.validateAllDrafts();
+    });
+
+    expect(committed!).toEqual({
+      authorUsername: null,
+      bookmarkedOnly: true,
+      categoryTag: null,
+      dateRange: null,
+    });
+  });
+
+  it('includes bookmarked-only in the active filter count', () => {
+    const { result } = renderHook(() =>
+      useMessageFeedFilters({
+        activeAuthorUsername: null,
+        activeBookmarkedOnly: true,
         activeDateRange: null,
         activeTag: null,
       }),

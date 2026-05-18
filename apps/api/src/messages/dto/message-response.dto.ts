@@ -15,4 +15,7 @@ export class MessageResponseDto {
 
   @ApiProperty({ example: '2026-05-15T12:00:00.000Z' })
   createdAt!: string;
+
+  @ApiProperty({ example: false })
+  isBookmarked!: boolean;
 }
